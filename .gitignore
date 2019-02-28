@@ -1,2 +1,7 @@
 *.class
 *.log
+data/*
+.idea/*
+feedkafka/target
+feedkafka/project
+**/*.iml
