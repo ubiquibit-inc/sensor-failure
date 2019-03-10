@@ -9,7 +9,7 @@ sealed abstract class StationId(prefix: String, id: String){
 
 case class BuoyId(prefix: Int, id: String) extends StationId(prefix.toString, id)
 
-case class CmanId(prefix: String, id: String) extends StationId(prefix, id)
+case class CManId(prefix: String, id: String) extends StationId(prefix, id)
 
 /** The rest may go bye bye
 

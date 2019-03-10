@@ -40,6 +40,7 @@ So we have data from 950 buoys reporting 17 different formats...
 
 Running the BuoyFinder worksheet, yields the following:
 
+```bash
 # Adcp files 29
 # Adcp2 files 39
 # Cwind files 75
@@ -56,6 +57,7 @@ Running the BuoyFinder worksheet, yields the following:
 # Swr1 files 149
 # Swr2 files 149
 # Text files 799
+```
 
 #### Start Kafka & Redis
 

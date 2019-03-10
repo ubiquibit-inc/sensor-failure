@@ -58,7 +58,7 @@ object FileReckoning {
       Try(BuoyId(s1.toInt, s2))
     }
 
-    tryBuoyId(str) getOrElse CmanId(str.substring(0, 2), str.substring(2))
+    tryBuoyId(str) getOrElse CManId(str.substring(0, 2), str.substring(2))
   }
 
   /**
