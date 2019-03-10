@@ -8,14 +8,14 @@ import com.ubiquibit.TimeHelper._
 import scala.collection.Map
 
 /**
-  * A repository for creating, updating and retrieving weather station information from Redis.
+  * A repository for weather station metadata.
   */
 trait StationRepository extends Redis {
 
   import com.ubiquibit.buoy.FileReckoning._
 
   // this is a little hacky, but I don't like the redis serialization libraries that are currently on offer
-  case class StationInfo(stationId: Any, reportFrequencyMinutes: Any, lastReport: Any = epochTimeZeroUTC())
+  case class StationInfo(stationId: String, reportFrequencyMinutes: String, lastReport: Any = epochTimeZeroUTC())
 
   private val stationIdField = "stationId"
   private val freqField = "reportFrequencyMinutes"
@@ -30,6 +30,9 @@ trait StationRepository extends Redis {
     Map(stationIdField -> stationId, freqField -> reportFrequencyMinutes, lastReportField -> lastReport.toInstant(TimeHelper.defaultOffset))
   }
 
+  /**
+    * Saves a record for each station represented in the data directory **with default values**.
+    */
   def saveStations(): Unit = {
     val total = stationIds.length
     val successes: Int = stationIds

@@ -2,10 +2,11 @@ package com.ubiquibit.buoy.jobs
 
 import java.io.File
 
+import com.ubiquibit.{KafkaTopics, StationRepository}
 import com.ubiquibit.buoy.{BuoyData, Ocean, Text}
 import org.apache.spark.sql.DataFrame
 
-object WriteRealtime2ToKafka {
+object InitKafka extends KafkaTopics with StationRepository{
 
   import com.ubiquibit.buoy.{FileReckoning => FR}
 
