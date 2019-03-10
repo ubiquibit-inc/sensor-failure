@@ -5,3 +5,6 @@ data/*
 feedkafka/target
 feedkafka/project
 **/*.iml
+project
+target
+.idea

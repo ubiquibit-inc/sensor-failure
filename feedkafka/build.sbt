@@ -25,6 +25,7 @@ version := "1.0"
 // You can define other libraries as dependencies in your build like this:
 libraryDependencies += "org.typelevel" %% "cats-core" % "1.4.0"
 libraryDependencies += "org.apache.kafka" % "kafka-clients" % "2.1.1"
+libraryDependencies += "net.debasishg" %% "redisclient" % "3.9"
 
 // Here, `libraryDependencies` is a set of dependencies, and by using `+=`,
 // we're adding the cats dependency to the set of dependencies that sbt will go
