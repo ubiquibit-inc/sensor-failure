@@ -1,6 +1,7 @@
 package com.ubiquibit.buoy
 
 import java.io.File
+import java.time.LocalDateTime
 
 /**
   * The "realtime" buoy data formats are described
@@ -35,4 +36,6 @@ case object Swr1 extends BuoyData("swr1")
 case object Swr2 extends BuoyData("swr2")
 case object Text extends BuoyData("txt")
 
+sealed abstract class Format( eventTime: LocalDateTime )
 
+//case object TextFmt extends Format()

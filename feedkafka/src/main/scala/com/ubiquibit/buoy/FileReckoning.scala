@@ -20,22 +20,24 @@ object FileReckoning {
     * @param pred    predicate for filter
     * @return all such filenames (including extensions)
     */
-  def filenames(dirName: String = buoyDataDirectory, pred: (File) => Boolean = (_) => true): List[String] = {
+  def filenames(dirName: String = buoyDataDirectory, fq: Boolean = false, pred: (File) => Boolean = (_) => true): List[String] = {
 
     val shipFileName = "ship_obs.txt"
     val skipShips: (File) => Boolean = (f: File) => !f.getName.equals(shipFileName)
 
     val file = new File(dirName)
-    file.listFiles
+    val names = file.listFiles
       .filter(_.isFile)
       .filter(pred)
       .filter(skipShips)
       .map(_.getName)
-      .toList
+
+    if( fq ) names.map(fn => s"$buoyDataDirectory$fn").toList
+    else names.toList
   }
 
   /**
-    * @return distinct filenames (w/o extension, asciibetical order)
+    * @return distinct filenames (w/o extension, in asciibetical order)
     */
   def distinctFilenames(): Seq[String] = {
     val alpha = filenames().sortWith((a, b) => a.compareTo(b) < 0)
