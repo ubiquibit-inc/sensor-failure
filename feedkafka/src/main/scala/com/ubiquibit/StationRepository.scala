@@ -2,7 +2,7 @@ package com.ubiquibit
 
 import java.time.LocalDateTime
 
-import com.ubiquibit.buoy.StationId
+import com.ubiquibit.buoy._
 import com.ubiquibit.TimeHelper._
 
 import scala.collection.Map
@@ -12,30 +12,33 @@ import scala.collection.Map
   */
 trait StationRepository extends Redis {
 
-  import com.ubiquibit.buoy.FileReckoning._
+  import com.ubiquibit.buoy.{FileReckoning => FR}
 
-  // this is a little hacky, but I don't like the redis serialization libraries that are currently on offer
-  case class StationInfo(stationId: String, reportFrequencyMinutes: String, lastReport: Any = epochTimeZeroUTC())
-
+  // this is hacky, but I don't like the current serialization libraries for redis
   private val stationIdField = "stationId"
   private val freqField = "reportFrequencyMinutes"
   private val lastReportField = "lastReportUTC"
+  private val textFileStateField = "lastReportUTC"
 
   private def redisKey(stationId: StationId): String = {
     require(stationId.toString.length > 3)
     s"stationId:$stationId"
   }
 
-  private def valueOf(stationId: String, reportFrequencyMinutes: Int = 0, lastReport: LocalDateTime = epochTimeZeroUTC()): Map[String, Any] = {
-    Map(stationIdField -> stationId, freqField -> reportFrequencyMinutes, lastReportField -> lastReport.toInstant(TimeHelper.defaultOffset))
+  private def valueOf(stationId: String, reportFrequencyMinutes: Int = 0, lastReport: LocalDateTime = epochTimeZeroUTC(), textState: ImportState = UNSUPPORTED): Map[String, Any] = {
+    Map(stationIdField -> stationId,
+      freqField -> reportFrequencyMinutes,
+      lastReportField -> lastReport.toInstant(TimeHelper.defaultOffset),
+      textFileStateField -> textState
+    )
   }
 
   /**
     * Saves a record for each station represented in the data directory **with default values**.
     */
   def saveStations(): Unit = {
-    val total = stationIds.length
-    val successes: Int = stationIds
+    val total = FR.stationIds.length
+    val successes: Int = FR.stationIds
       .map { s => redis.hmset(redisKey(s), valueOf(s.toString)) }
       .count(_ == true)
     val failures = total - successes
@@ -43,9 +46,15 @@ trait StationRepository extends Redis {
     if (failures > 0) println(s"(Redis) SAVE >> $failures errors occurred")
   }
 
+  private def initialImportStatusFromFiles(): Unit = {
+    val fileTypes = FR.supportedTypes
+//    val FR.stationIds.filter()
+    ???
+  }
+
   private [ubiquibit] def deleteStations(): Unit = {
-    val total = stationIds.length
-    val deleted = stationIds.map(sId =>
+    val total = FR.stationIds.length
+    val deleted = FR.stationIds.map(sId =>
       redis.del(redisKey(sId)) match {
         case Some(d) => d
         case _ => 0
@@ -57,8 +66,8 @@ trait StationRepository extends Redis {
   }
 
   def readStations(): Seq[Any] = {
-    val total = stationIds.length
-    val stations = stationIds.map{ sId =>
+    val total = FR.stationIds.length
+    val stations = FR.stationIds.map{ sId =>
       redis.hmget(redisKey(sId), stationIdField, freqField, lastReportField) match {
         case s: Some[scala.collection.immutable.Map[String, String]] =>
           val m = s.get

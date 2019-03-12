@@ -1,27 +1,29 @@
 package com.ubiquibit.buoy.jobs
 
-import java.io.File
 import java.sql.Timestamp
 
-import com.ubiquibit.{KafkaTopics, Spark, StationRepository}
-import com.ubiquibit.buoy._
-import org.apache.spark.sql.{Column, DataFrame, Row}
 
-object InitKafka extends KafkaTopics with StationRepository with Spark  {
+import com.ubiquibit.buoy.TextRecord
 
-  import com.ubiquibit.buoy.{FileReckoning => FR}
+import org.apache.spark.sql.{DataFrame, Row, SQLContext, SparkSession}
 
+object InitKafkaSpec /* extends InitKafka */{
 
-  def textToDF(fqFilename: String): DataFrame = {
+  def main(args: Array[String]): Unit = {
+/*
+    val hpath = supportedFiles.tail.head.getAbsolutePath
 
-    def replaceMM(str: String): String = {
-      //    str.replaceAll("MM", "0.0")
-      str.replaceAll("MM", "NaN")
-    }
+    val df = makeTextDF(hpath)
 
-    def singleSpace(str: String): String = {
-      str.replaceAll("  ", " ")
-    }
+    import spark.sqlContext.implicits._
+    df.orderBy($"eventTime".desc)
+    df.show()
+
+    df.printSchema()
+*/
+  }
+
+/*  override def makeTextDF(fqFilename: String): DataFrame = {
 
     val lines = sc.textFile(fqFilename)
 
@@ -44,20 +46,20 @@ object InitKafka extends KafkaTopics with StationRepository with Spark  {
     import org.apache.spark.sql.catalyst.ScalaReflection
 
     val schema = ScalaReflection
-      .schemaFor[TextRecord]
+      .schemaFor[TextRow]
       .dataType.asInstanceOf[StructType]
 
     spark.sqlContext.createDataFrame(rows, schema)
 
   }
 
-  //   c. write data to Kafka (using canonical model)
-  //   > calculate phase for every combination of station id, data format relevant to this station (upsert to Redis)
-
-  def main(args: Array[String]): Unit = {
-
-    FR.supportByStation()
-
+  override def replaceMM(str: String): String = {
+    //    str.replaceAll("MM", "0.0")
+    str.replaceAll("MM", "NaN")
   }
 
+  override def singleSpace(str: String): String = {
+    str.replaceAll("  ", " ")
+  }
+*/
 }

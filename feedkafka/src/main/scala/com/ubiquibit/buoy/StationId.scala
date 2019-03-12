@@ -1,5 +1,7 @@
 package com.ubiquibit.buoy
 
+import scala.util.Try
+
 /**
   * @see https://www.ndbc.noaa.gov/staid.shtml
   */
@@ -11,29 +13,21 @@ case class BuoyId(prefix: Int, id: String) extends StationId(prefix.toString, id
 
 case class CManId(prefix: String, id: String) extends StationId(prefix, id)
 
-/** The rest may go bye bye
+object StationId{
 
-  * This is the two-digit code for WMO oceanic regions.
+  /**
+    * Take a filename and derive a StationId from it (polymorphic...)
+    *
+    * @param str some string
+    * @return such a beast
+    */
+  def makeStationId(str: String): StationId = {
+    def tryBuoyId(str: String): Try[StationId] = {
+      val s1 = str.substring(0, 2)
+      val s2 = str.substring(2)
+      Try(BuoyId(s1.toInt, s2))
+    }
+    tryBuoyId(str) getOrElse CManId(str.substring(0, 2), str.substring(2))
+  }
 
-sealed abstract class WmoRegion(code: Int){
-  def codeStr(): String = code.toString
 }
-
-case object Pacific_SouthAmerica extends WmoRegion(32)
-
-case object Atlantic_US_SouthEast extends WmoRegion(41)
-
-case object Gulf_of_Mexico extends WmoRegion(42)
-
-case object Atlantic_US_NorthOfNC extends WmoRegion(44)
-
-case object GreatLakes extends WmoRegion(45)
-
-case object Pacific_US extends WmoRegion(46)
-
-case object Pacific_Hawaiian_Islands extends WmoRegion(51)
-
-case object Pacific_Guam extends WmoRegion(52)
-
-case class OceanStationId(region: WmoRegion, id: String) extends StationId(prefix = region.codeStr(), id)
-*/

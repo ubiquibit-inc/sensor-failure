@@ -13,10 +13,11 @@ import java.time.LocalDateTime
   */
 sealed abstract class BuoyData(extension: String){
   def same(file: File): Boolean = file.getName.endsWith(extension)
+  def ext: String = extension
 }
 
 object BuoyData {
-  val values: Set[BuoyData] = Set(Adcp, Adcp2, Cwind, Dart, DataSpec, Drift, Hkp, Ocean, Rain, Spec, Srad, Supl, Swr1, Swr2, Text)
+  val values: Set[BuoyData] = Set(Adcp, Adcp2, Cwind, Dart, DataSpec, Drift, Hkp, Ocean, Rain, Spec, Srad, Supl, Swr1, Swr2, Text, Undefined)
 }
 
 case object Adcp extends BuoyData("adcp")
@@ -35,7 +36,4 @@ case object Swdir extends BuoyData("swdir")
 case object Swr1 extends BuoyData("swr1")
 case object Swr2 extends BuoyData("swr2")
 case object Text extends BuoyData("txt")
-
-sealed abstract class Format( eventTime: LocalDateTime )
-
-//case object TextFmt extends Format()
+case object Undefined extends BuoyData("undefined")
