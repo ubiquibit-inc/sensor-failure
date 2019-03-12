@@ -1,30 +1,41 @@
 package com.ubiquibit.buoy
 
 import StationId.makeStationId
+import com.typesafe.config.{Config, ConfigFactory}
 
 /**
   * NDBC data is laid out in - let's call it a semantically-surprising way.
   * This file is for some dead reckoning on the data that was downloaded, as
   * described in the README.md file...
   */
-object FileReckoning {
+trait FileReckoning {
 
   import java.io.File
 
-  val buoyDataDirectory = "/Users/jason/scratch/sensor-failure/data/www.ndbc.noaa.gov/data/realtime2/"
+  private val config: Config = ConfigFactory.load()
+  private [buoy] val buoyData = "/www.ndbc.noaa.gov/data/realtime2/"
+  private val buoyDataDirectory = s"${config.getString("data.directory")}$buoyData"
 
-  val supportedTypes: Set[BuoyData] = Set(Text)
-  val filenameSupported: (String) => Boolean = { absolutePath => supportedTypes.exists(_.same(new File(absolutePath))) }
-  val fileSupported: (File) => Boolean = { f => supportedTypes.exists(_.same(f)) }
+  protected val supportedTypes: List[BuoyData] = List(Text)
+  private val filenameSupported: (String) => Boolean = { absolutePath => supportedTypes.exists(_.same(new File(absolutePath))) }
 
-  /**
-    * @return a list of files sitting on disk
-    */
-  def supportedFiles: List[File] = {
+  // @return a list of files sitting on disk
+  private def supportedFiles: List[File] = {
     filenames(fq = true)
       .filter(filenameSupported)
       .map(new File(_))
   }
+
+  def getFile(stationId: StationId, ofType: BuoyData): Option[File] = {
+    if( !supportByStation().exists(_._1 == stationId) ) None
+    val expectedName = s"${stationId.toString}.${ofType.ext}".toUpperCase
+    supportedFiles.find{ _.getName.equalsIgnoreCase(expectedName) }
+  }
+
+  /**
+    * A list of station ids - note: stations are not reported if they don't have a supported data feed
+    */
+  def stationIds: Seq[StationId] = pairs().map(_._1).distinct
 
   /**
     * A map from StationId to it's supported BuoyData outputs (on disk)
@@ -58,23 +69,5 @@ object FileReckoning {
     if (fq) names.map(fn => s"$buoyDataDirectory$fn").toList
     else names.toList
   }
-
-  // distinct filenames (w/o extension, in asciibetical order)
-  private def distinctFilenames(): Seq[String] = {
-    val alpha = filenames().sortWith((a, b) => a.compareTo(b) < 0)
-    val x: List[String] = alpha.map {
-      _.split("\\.")(0)
-    }
-    x.distinct
-  }
-
-  /**
-    * A good enough place for a list of station ids (calculated at time of this object's initialization...
-    */
-  val stationIds: Seq[StationId] = distinctFilenames().map(makeStationId)
-
-//  def main(args: Array[String]): Unit = {
-//    supportByStation().foreach(println)
-//  }
 
 }

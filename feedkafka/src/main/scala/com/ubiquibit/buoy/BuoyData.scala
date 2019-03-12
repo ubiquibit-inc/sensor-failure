@@ -36,4 +36,4 @@ case object Swdir extends BuoyData("swdir")
 case object Swr1 extends BuoyData("swr1")
 case object Swr2 extends BuoyData("swr2")
 case object Text extends BuoyData("txt")
-case object Undefined extends BuoyData("undefined")
+case object Undefined extends BuoyData("undefined") // TODO remove!

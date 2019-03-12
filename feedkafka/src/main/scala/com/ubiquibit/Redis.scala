@@ -1,6 +1,7 @@
 package com.ubiquibit
 
 import com.redis._
+import com.typesafe.config.{Config, ConfigFactory}
 import com.ubiquibit.buoy.StationId
 
 /**
@@ -10,6 +11,10 @@ import com.ubiquibit.buoy.StationId
   */
 trait Redis {
 
-  val redis: RedisClient = new RedisClient("localhost", 6379)
+  private val config: Config = ConfigFactory.load()
+  private val host: String = config.getString("redis.host")
+  private val port: Int = config.getInt("redis.port")
+
+  val redis: RedisClient = new RedisClient(s"$host", s"$port".toInt)
 
 }
