@@ -1,7 +1,6 @@
 package com.ubiquibit.buoy.jobs
 
-import com.ubiquibit.StationRepository
-import com.ubiquibit.buoy.FileReckoning
+import com.ubiquibit.buoy.{FileReckoning, StationRepository}
 
 /**
   * Creates a Redis system of record for information stored
@@ -24,7 +23,7 @@ class InitRedisImpl(env: {
   private val filez: FileReckoning = env.fileReckoning
   private val repo: StationRepository = env.stationRepository
 
-  def run() = {
+  def run(): Unit = {
     println(s"${filez.stationIds.length} stations detected on disk.")
 
     val stationIds = filez.stationIds

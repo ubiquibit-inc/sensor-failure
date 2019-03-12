@@ -1,6 +1,6 @@
-package com.ubiquibit
+package com.ubiquibit.buoy
 
-import com.ubiquibit.buoy.{BuoyData, READY, StationId, UNSUPPORTED}
+import com.ubiquibit.Wiring
 import org.scalatest.FunSpec
 
 import scala.util.Try

@@ -37,7 +37,7 @@ class FileReckoningSpec extends FunSpec{
   describe("FileReckoning: ") {
     it("returns a stationId per fixture file") {
 
-      val f = fixture
+      fixture
 
       instance.stationIds.map(_.toString) contains "a"
       instance.stationIds.map(_.toString) contains "b"
@@ -47,7 +47,7 @@ class FileReckoningSpec extends FunSpec{
 
     it("returns a File for StationId and supported BuoyData"){
 
-      val f = fixture
+      fixture
 
       val stationId = instance.stationIds.head
       val typeOf  = instance.supportedTypes.head
@@ -63,7 +63,7 @@ class FileReckoningSpec extends FunSpec{
 
     it("returns a BuoyData for each station with a supported data feed"){
 
-      val f = fixture
+      fixture
 
       val result = instance.supportByStation()
 

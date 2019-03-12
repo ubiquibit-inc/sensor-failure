@@ -1,6 +1,7 @@
 package com.ubiquibit.buoy.jobs
 
-import com.ubiquibit.{StationRepository, Wiring}
+import com.ubiquibit.Wiring
+import com.ubiquibit.buoy.StationRepository
 import org.scalatest.FunSpec
 
 class InitRedisSpec extends FunSpec{

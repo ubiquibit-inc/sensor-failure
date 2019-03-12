@@ -1,6 +1,6 @@
 package com.ubiquibit.buoy.jobs
 
-import org.scalatest.{FunSpec, FunSpecLike}
+import org.scalatest.FunSpec
 
 class InitKafkaSpec extends FunSpec {
 

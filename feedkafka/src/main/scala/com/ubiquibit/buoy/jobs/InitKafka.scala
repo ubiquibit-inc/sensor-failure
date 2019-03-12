@@ -3,7 +3,7 @@ package com.ubiquibit.buoy.jobs
 import java.sql.Timestamp
 
 import com.ubiquibit.buoy._
-import com.ubiquibit.{KafkaTopics, Spark, StationRepository}
+import com.ubiquibit.Spark
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.{DataFrame, Row, SparkSession}
 

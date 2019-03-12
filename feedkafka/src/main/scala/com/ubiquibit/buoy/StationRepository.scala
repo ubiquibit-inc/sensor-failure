@@ -1,10 +1,10 @@
-package com.ubiquibit
+package com.ubiquibit.buoy
 
 import java.time.LocalDateTime
 
 import com.redis.RedisClient
-import com.ubiquibit.buoy._
 import com.ubiquibit.TimeHelper._
+import com.ubiquibit.{Redis, TimeHelper}
 
 import scala.collection.Map
 
