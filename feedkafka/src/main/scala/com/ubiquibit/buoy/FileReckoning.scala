@@ -1,5 +1,7 @@
 package com.ubiquibit.buoy
 
+import java.io.File
+
 import StationId.makeStationId
 import com.typesafe.config.{Config, ConfigFactory}
 
@@ -10,21 +12,32 @@ import com.typesafe.config.{Config, ConfigFactory}
   */
 trait FileReckoning {
 
+  /**
+    * A list of station ids - note: stations are not reported if they don't have a supported data feed
+    */
+  def stationIds: Seq[StationId]
+
+  /**
+    * A map from StationId to it's supported BuoyData outputs (on disk)
+    */
+  def supportByStation(): Map[StationId, Seq[BuoyData]]
+
+  def getFile(stationId: StationId, ofType: BuoyData): Option[File]
+
+  def supportedTypes: List[BuoyData] = List(Text) // TODO move to its own trait
+
+}
+
+class FileReckoningImpl extends FileReckoning{
+
   import java.io.File
 
   private val config: Config = ConfigFactory.load()
-  private [buoy] val buoyData = "/www.ndbc.noaa.gov/data/realtime2/"
+  private [buoy] val buoyData = s"${config.getString("bouy.data.subdir")}"
   private val buoyDataDirectory = s"${config.getString("data.directory")}$buoyData"
 
-  protected val supportedTypes: List[BuoyData] = List(Text)
+  override val supportedTypes: List[BuoyData] = List(Text)
   private val filenameSupported: (String) => Boolean = { absolutePath => supportedTypes.exists(_.same(new File(absolutePath))) }
-
-  // @return a list of files sitting on disk
-  private def supportedFiles: List[File] = {
-    filenames(fq = true)
-      .filter(filenameSupported)
-      .map(new File(_))
-  }
 
   def getFile(stationId: StationId, ofType: BuoyData): Option[File] = {
     if( !supportByStation().exists(_._1 == stationId) ) None
@@ -32,14 +45,8 @@ trait FileReckoning {
     supportedFiles.find{ _.getName.equalsIgnoreCase(expectedName) }
   }
 
-  /**
-    * A list of station ids - note: stations are not reported if they don't have a supported data feed
-    */
   def stationIds: Seq[StationId] = pairs().map(_._1).distinct
 
-  /**
-    * A map from StationId to it's supported BuoyData outputs (on disk)
-    */
   def supportByStation(): Map[StationId, Seq[BuoyData]] = {
     pairs().groupBy(_._1).mapValues(_.map(_._2))
   }
@@ -68,6 +75,13 @@ trait FileReckoning {
 
     if (fq) names.map(fn => s"$buoyDataDirectory$fn").toList
     else names.toList
+  }
+
+  // @return a list of files sitting on disk
+  private def supportedFiles: List[File] = {
+    filenames(fq = true)
+      .filter(filenameSupported)
+      .map(new File(_))
   }
 
 }

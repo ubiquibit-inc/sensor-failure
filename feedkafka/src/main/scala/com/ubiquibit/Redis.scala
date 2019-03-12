@@ -2,7 +2,6 @@ package com.ubiquibit
 
 import com.redis._
 import com.typesafe.config.{Config, ConfigFactory}
-import com.ubiquibit.buoy.StationId
 
 /**
   * Basic redis support...
@@ -11,10 +10,16 @@ import com.ubiquibit.buoy.StationId
   */
 trait Redis {
 
+  def client: RedisClient
+
+}
+
+class RedisImpl extends Redis{
+
   private val config: Config = ConfigFactory.load()
   private val host: String = config.getString("redis.host")
   private val port: Int = config.getInt("redis.port")
 
-  val redis: RedisClient = new RedisClient(s"$host", s"$port".toInt)
+  override val client: RedisClient = new RedisClient(s"$host", s"$port".toInt)
 
 }

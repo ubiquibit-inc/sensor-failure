@@ -1,17 +1,21 @@
 package com.ubiquibit.buoy.jobs
 
-import org.scalatest.FunSpecLike
+import com.ubiquibit.{StationRepository, Wiring}
+import org.scalatest.FunSpec
 
-class InitRedisSpec extends InitRedis with FunSpecLike{
+class InitRedisSpec extends FunSpec{
+
+  val instance: InitRedis = Wiring.initRedis
+  val repo: StationRepository = Wiring.stationRepository
 
   def fixture =
     new {
-      deleteStations()
+      repo.deleteStations()
     }
 
   describe("InitRedis"){
     it("should start from a blank slate"){
-      assert(readStations().length === 0 )
+      assert(repo.readStations().length === 0 )
     }
   }
 

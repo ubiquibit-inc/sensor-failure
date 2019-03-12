@@ -2,7 +2,7 @@ package com.ubiquibit.buoy.jobs
 
 import org.scalatest.{FunSpec, FunSpecLike}
 
-class InitKafkaSpec extends InitKafka with FunSpecLike{
+class InitKafkaSpec extends FunSpec {
 
   describe("InitKafka") {
     it("be implemented") {

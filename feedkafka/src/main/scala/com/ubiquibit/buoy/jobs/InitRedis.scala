@@ -1,40 +1,49 @@
 package com.ubiquibit.buoy.jobs
 
 import com.ubiquibit.StationRepository
+import com.ubiquibit.buoy.FileReckoning
 
 /**
-  * We use Redis to store a little bit of information about the system. After
-  * downloading data a local data directory, this program will scan it and
-  * create some meta-data information in Redis.
+  * Creates a Redis system of record for information stored
+  * on disk.
   */
-object InitRedis extends InitRedis {
+trait InitRedis {
 
-  def main(args: Array[String]): Unit = {
-    doRun()
-  }
+  /**
+    * Interpret what's on disk and create weather station metadata in Redis.
+    */
+  def run(): Unit
 
 }
 
-class InitRedis extends StationRepository {
+class InitRedisImpl(env: {
+  val fileReckoning: FileReckoning
+  val stationRepository: StationRepository
+}) extends InitRedis {
 
-  def doRun() = {
-    println(s"${stationIds.length} stations detected on disk.")
+  private val filez: FileReckoning = env.fileReckoning
+  private val repo: StationRepository = env.stationRepository
 
-    var stations = readStations()
+  def run() = {
+    println(s"${filez.stationIds.length} stations detected on disk.")
 
-    if( stations.isEmpty ){
+    val stationIds = filez.stationIds
+    var stations = repo.readStations()
+
+    if (stations.isEmpty) {
       println("Redis has no station information, creating...")
-      initStations()
-      stations = readStations()
+      repo.initStations()
+      stations = repo.readStations()
     }
 
-    if( stations.length != stationIds.length ){
+    if (stations.length != stationIds.length) {
       println(s"Mismatch between ${stations.length} stations in Redis and ${stationIds.length} on disk, wiping Redis and starting over.")
-      deleteStations()
-      initStations()
+      repo.deleteStations()
+      repo.initStations()
     }
 
     println("Exiting.")
 
   }
+
 }

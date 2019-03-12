@@ -3,9 +3,12 @@ package com.ubiquibit.buoy
 import java.io.File
 
 import com.typesafe.config.{Config, ConfigFactory}
+import com.ubiquibit.Wiring
 import org.scalatest.FunSpec
 
-class FileReckoningSpec extends FunSpec with FileReckoning {
+class FileReckoningSpec extends FunSpec{
+
+  val instance: FileReckoning = Wiring.fileReckoning
 
   val config: Config = ConfigFactory.load()
 
@@ -18,11 +21,12 @@ class FileReckoningSpec extends FunSpec with FileReckoning {
 
   private def fixture =
     new {
-      private val e = config.getString("data.directory")
-      private val f = new File(s"$e$buoyData")
+      private val dir = config.getString("data.directory")
+      private val subdir = config.getString("bouy.data.subdir")
+      private val f = new File(s"$dir$subdir")
       assert(f.exists || f.mkdirs())
       assert(f.exists && f.canWrite)
-      private val created = supportedTypes.map { t =>
+      private val created = instance.supportedTypes.map { t =>
         createIfNecessary(f, "abcdef." + t.ext)
         createIfNecessary(f, "bcdefg." + t.ext)
         createIfNecessary(f, "cdefgh." + t.ext)
@@ -35,9 +39,9 @@ class FileReckoningSpec extends FunSpec with FileReckoning {
 
       val f = fixture
 
-      stationIds.map(_.toString) contains "a"
-      stationIds.map(_.toString) contains "b"
-      stationIds.map(_.toString) contains "c"
+      instance.stationIds.map(_.toString) contains "a"
+      instance.stationIds.map(_.toString) contains "b"
+      instance.stationIds.map(_.toString) contains "c"
 
     }
 
@@ -45,10 +49,10 @@ class FileReckoningSpec extends FunSpec with FileReckoning {
 
       val f = fixture
 
-      val stationId = stationIds.head
-      val typeOf  = supportedTypes.head
+      val stationId = instance.stationIds.head
+      val typeOf  = instance.supportedTypes.head
 
-      val result = getFile(stationId, typeOf)
+      val result = instance.getFile(stationId, typeOf)
 
       assert( result.isDefined )
 
@@ -61,7 +65,7 @@ class FileReckoningSpec extends FunSpec with FileReckoning {
 
       val f = fixture
 
-      val result = supportByStation()
+      val result = instance.supportByStation()
 
       // this test is stinky because it works by coincidence (the fixture made it do it). fixture
       // should be a little random and interrogable...

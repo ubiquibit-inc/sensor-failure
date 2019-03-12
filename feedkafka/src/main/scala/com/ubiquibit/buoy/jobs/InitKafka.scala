@@ -4,27 +4,38 @@ import java.sql.Timestamp
 
 import com.ubiquibit.buoy._
 import com.ubiquibit.{KafkaTopics, Spark, StationRepository}
-import org.apache.spark.sql.{DataFrame, Row}
+import org.apache.spark.SparkContext
+import org.apache.spark.sql.{DataFrame, Row, SparkSession}
 
-object InitKafka extends InitKafka {
+trait InitKafka {
 
   //   c. write data to Kafka (using canonical model)
-
-  def main(args: Array[String]): Unit = {
-    for ((sta, ft) <- supportByStation()) {
-      ft.foreach{ t =>
-        val f = getFile(sta, t).get
-        val path = f.getAbsolutePath
-        val df = textToDF(path)
-        println(s"Created dataframe for $path")
-        df.show(30, false)
-      }
-    }
-  }
+  def run(): Unit
 
 }
 
-class InitKafka extends KafkaTopics with StationRepository with Spark {
+class InitKafkaImpl(env: {
+  val stationRepository: StationRepository
+  val spark: Spark
+  val fileReckoning: FileReckoning
+}) extends InitKafka{
+
+  private val repo: StationRepository = env.stationRepository
+  private val spark: SparkSession = env.spark.spark
+  private val sc: SparkContext = env.spark.sc
+  private val filez: FileReckoning = env.fileReckoning
+
+  def run(): Unit ={
+    for ((sta, ft) <- filez.supportByStation()) {
+      ft.foreach{ t =>
+        val f = filez.getFile(sta, t).get
+        val path = f.getAbsolutePath
+        val df = textToDF(path)
+        println(s"Created dataframe for $path")
+        df.show(30, truncate = false)
+      }
+    }
+  }
 
   def textToDF(fqFilename: String): DataFrame = {
 
