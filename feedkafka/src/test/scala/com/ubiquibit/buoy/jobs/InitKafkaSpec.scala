@@ -5,8 +5,13 @@ import org.scalatest.FunSpec
 class InitKafkaSpec extends FunSpec {
 
   describe("InitKafka should") {
-    it("be better tested") {
-      assert( 1 === 3)
+
+    it("should synchronize topics between Redis and Kafka") {
+      assert( 1 === 2)
+    }
+
+    it("or just dump the topic names to a flat-file, if necessary"){
+
     }
   }
 

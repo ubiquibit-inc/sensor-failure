@@ -8,10 +8,10 @@ import com.ubiquibit.Wiring
   * Pre-reqs:
   *
   * a. Data have been downloaded to the data directory
-  * b. Redis is running at the location
-  * c. Kafka is operational
+  * b. Redis is running
+  * c. Kafka is operational (version-compatible with Scala 2.12)
   *
-  * Note: (a,b,c) can be specified in application.propoerties (or as JVM args)
+  * Note: Settings for (a,b,c) can be specified in application.propoerties (or as JVM args)
   *
   * P.S. Once bootstrapped, the system can drain off events from the Kafka queue,
   * but it is up to a future author to write teh queue appenders.

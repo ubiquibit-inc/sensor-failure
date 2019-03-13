@@ -1,6 +1,8 @@
 package com.ubiquibit
 
+import java.sql.Timestamp
 import java.time.{LocalDateTime, ZoneOffset}
+import java.util.Calendar
 
 object TimeHelper {
 
@@ -21,6 +23,24 @@ object TimeHelper {
     */
   def epochTimeZeroUTC() : LocalDateTime = {
     LocalDateTime.ofEpochSecond(0, 0, defaultOffset)
+  }
+
+  private def toCal(ts: Timestamp): Calendar ={
+    val cal = Calendar.getInstance
+    cal.setTime(ts)
+    cal
+  }
+
+  def getDayOfMonth(ts: Timestamp) = {
+    toCal(ts).get(Calendar.DAY_OF_MONTH)
+  }
+
+  def getYear(ts: Timestamp): Int = {
+    toCal(ts).get(Calendar.YEAR)
+  }
+
+  def getMonth(ts: Timestamp): Int = {
+    toCal(ts).get(Calendar.MONTH)
   }
 
 }

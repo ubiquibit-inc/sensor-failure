@@ -62,9 +62,14 @@ Running the BuoyFinder worksheet, yields the following:
 #### Start Kafka & Redis
 
 ````bash
-./docker/start-kafka.sh
 ./docker/start-redis.sh
 ````
+Install apache Kafka (choose version compatible with Scala 2.12) and start.
+```bash 
+# edit, then run...
+./feedkafka/bash/create-kafka-topics
+
+```
 
 
 
