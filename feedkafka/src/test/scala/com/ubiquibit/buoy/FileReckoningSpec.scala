@@ -3,12 +3,24 @@ package com.ubiquibit.buoy
 import java.io.File
 
 import com.typesafe.config.{Config, ConfigFactory}
-import com.ubiquibit.Wiring
+import com.ubiquibit.{FakeFile, Wiring}
 import org.scalatest.FunSpec
+import StationId.makeStationId
 
-class FileReckoningSpec extends FunSpec{
+class FileReckoningSpec extends FunSpec {
 
-  val instance: FileReckoning = Wiring.fileReckoning
+  private val fullMonty = Wiring.fileReckoning
+
+  val (fmt0, fmt1) = (Ocean, Swr2)
+
+  val instance: FileReckoning = new FileReckoning {
+
+    override def stationIds: Seq[StationId] = Seq("abcde", "123123").map(makeStationId)
+
+    override def supportByStation: Map[StationId, Seq[BuoyData]] = Map(stationIds.head -> Seq(fmt1, fmt0), stationIds(1) -> Seq(fmt1))
+
+    override def getFile(stationId: StationId, ofType: BuoyData): Option[File] = Some(new FakeFile(stationId.toString))
+  }
 
   val config: Config = ConfigFactory.load()
 
@@ -34,8 +46,8 @@ class FileReckoningSpec extends FunSpec{
       assert(created.size === created.flatten.size) // make sure createNewFile never failed
     }
 
-  describe("FileReckoning: ") {
-    it("returns a stationId per fixture file") {
+  describe("FileReckoning should") {
+    it("return a stationId per fixture file") {
 
       fixture
 
@@ -45,33 +57,31 @@ class FileReckoningSpec extends FunSpec{
 
     }
 
-    it("returns a File for StationId and supported BuoyData"){
+    it("return a File for StationId and supported BuoyData") {
 
       fixture
 
       val stationId = instance.stationIds.head
-      val typeOf  = instance.supportedTypes.head
+      val typeOf = instance.supportedTypes.head
 
       val result = instance.getFile(stationId, typeOf)
 
-      assert( result.isDefined )
+      assert(result.isDefined)
 
       val file = result.get
-      assert( file.exists() && file.isFile )
+      assert(file.exists() && file.isFile)
 
     }
 
-    it("returns a BuoyData for each station with a supported data feed"){
+    it("return a BuoyData for each station with a supported data feed") {
 
       fixture
 
       val result = instance.supportByStation
 
-      // this test is stinky because it works by coincidence (the fixture made it do it). fixture
-      // should be a little random and interrogable...
-
-      assert( result.count(_._2.contains(Text)) === 3 )
-      assert( result.size === 3)
+      assert(result.count(_._2.contains(Swr2)) === 2)
+      assert(result.count(_._2.contains(Ocean)) === 1)
+      assert(result.size === 2)
 
     }
 

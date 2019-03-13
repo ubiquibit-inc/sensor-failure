@@ -6,7 +6,7 @@ import org.scalatest.FunSpec
 
 class InitRedisSpec extends FunSpec{
 
-  val instance: InitRedis = Wiring.initRedis
+  val instance: InitRedis = Wiring.initRedis // TODO re-wire
   val repo: StationRepository = Wiring.stationRepository
 
   def fixture =
@@ -15,8 +15,8 @@ class InitRedisSpec extends FunSpec{
     }
 
   describe("InitRedis should"){
-    it("start from a blank slate"){
-      assert(repo.readStations().length === 0 )
+    it("be better tested"){
+      assert(1 === 0 )
     }
   }
 

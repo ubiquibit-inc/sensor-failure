@@ -4,7 +4,7 @@ import java.io.File
 
 import com.redis.RedisClient
 import com.redis.serialization.{Format, Parse}
-import com.ubiquibit.Redis
+import com.ubiquibit.{FakeFile, Redis}
 import org.scalatest.FunSpec
 import com.ubiquibit.buoy.StationId.makeStationId
 
@@ -124,18 +124,6 @@ class StationRepositorySpec extends FunSpec {
       delCount = delCount + 1
       None
     }
-  }
-
-  class FakeFile(str: String) extends File(str) {
-    val strCpy = str
-
-    override def getAbsolutePath: String = strCpy
-
-    override def canRead: Boolean = true
-
-    override def isDirectory: Boolean = false
-
-    override def isFile: Boolean = true
   }
 
 }
