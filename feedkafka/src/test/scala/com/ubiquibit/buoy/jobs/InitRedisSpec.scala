@@ -14,8 +14,8 @@ class InitRedisSpec extends FunSpec{
       repo.deleteStations()
     }
 
-  describe("InitRedis"){
-    it("should start from a blank slate"){
+  describe("InitRedis should"){
+    it("start from a blank slate"){
       assert(repo.readStations().length === 0 )
     }
   }

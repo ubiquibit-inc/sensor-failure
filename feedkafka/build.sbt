@@ -29,7 +29,7 @@ libraryDependencies += "net.debasishg" %% "redisclient" % "3.9"
 libraryDependencies += "org.apache.spark" %% "spark-sql" % "2.4.0"
 libraryDependencies += "org.apache.spark" %% "spark-sql" % "2.4.0"
 libraryDependencies += "org.scalatest" %% "scalatest" % "3.2.0-SNAP10" % Test
-libraryDependencies += "org.scalamock" %% "scalamock" % "4.1.0" % Test
+//libraryDependencies += "org.scalamock" %% "scalamock" % "4.1.0" % Test
 libraryDependencies += "com.typesafe" % "config" % "1.3.2"
 libraryDependencies += "org.scalacheck" %% "scalacheck" % "1.14.0" % Test
 

@@ -4,7 +4,7 @@ import org.scalatest.FunSpec
 
 class InitKafkaSpec extends FunSpec {
 
-  describe("InitKafka") {
+  describe("InitKafka should") {
     it("be implemented") {
       assert( 1 === 3)
     }

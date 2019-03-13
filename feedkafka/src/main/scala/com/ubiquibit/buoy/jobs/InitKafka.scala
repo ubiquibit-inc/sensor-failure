@@ -26,7 +26,7 @@ class InitKafkaImpl(env: {
   private val filez: FileReckoning = env.fileReckoning
 
   def run(): Unit ={
-    for ((sta, ft) <- filez.supportByStation()) {
+    for ((sta, ft) <- filez.supportByStation) {
       ft.foreach{ t =>
         val f = filez.getFile(sta, t).get
         val path = f.getAbsolutePath

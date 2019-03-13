@@ -8,7 +8,7 @@ class ConfigSpec extends FunSpec{
 
   describe("Config"){
 
-    it("test configuration should be loaded") {
+    it("should be loaded") {
       val config: Config = ConfigFactory.load()
       config.getString("data.directory") should be ("/tmp/test")
     }

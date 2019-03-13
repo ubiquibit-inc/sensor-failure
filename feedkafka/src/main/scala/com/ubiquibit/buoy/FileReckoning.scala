@@ -20,7 +20,7 @@ trait FileReckoning {
   /**
     * A map from StationId to it's supported BuoyData outputs (on disk)
     */
-  def supportByStation(): Map[StationId, Seq[BuoyData]]
+  def supportByStation: Map[StationId, Seq[BuoyData]]
 
   def getFile(stationId: StationId, ofType: BuoyData): Option[File]
 

@@ -65,7 +65,7 @@ class FileReckoningSpec extends FunSpec{
 
       fixture
 
-      val result = instance.supportByStation()
+      val result = instance.supportByStation
 
       // this test is stinky because it works by coincidence (the fixture made it do it). fixture
       // should be a little random and interrogable...

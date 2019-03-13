@@ -1,9 +1,6 @@
 package com.ubiquibit.buoy
 
-import java.time.LocalDateTime
-
 import com.redis.RedisClient
-import com.ubiquibit.TimeHelper._
 import com.ubiquibit.{Redis, TimeHelper}
 
 import scala.collection.Map
@@ -18,14 +15,14 @@ trait StationRepository {
     */
   def initStations(): Unit
 
-  def readStations(): Seq[Any]
+  def readStations(): Seq[StationInfo]
 
   /**
     * @param stationId    an existing station id
     * @param buoyData     any BuoyData type (except UNSUPPORTED)
     * @param importStatus either WORKING, DONE or ERROR
     */
-  def updateImportStatus(stationId: StationId, buoyData: BuoyData, importStatus: ImportStatus): Option[StationId]
+  def updateImportStatus(stationId: StationId, buoyData: BuoyData, importStatus: ImportStatus): Option[ImportStatus]
 
   /**
     * @param stationId an existing stationid
@@ -56,15 +53,15 @@ class StationRepositorImpl(env: {
     s"stationId:$stationId"
   }
 
-  def updateImportStatus(stationId: StationId, buoyData: BuoyData, importStatus: ImportStatus): Option[StationId] = {
-    require(stationExists(stationId).isDefined)
+  def updateImportStatus(stationId: StationId, buoyData: BuoyData, importStatus: ImportStatus): Option[ImportStatus] = {
+    if (stationExists(stationId).isEmpty) return None
     require(BuoyData.values.contains(buoyData))
     importStatus match {
       case ERROR | WORKING | DONE =>
-        if (redis.hmset(stationId.toString, Seq(buoyData.toString -> importStatus.toString))) Some(stationId)
+        if (redis.hmset(redisKey(stationId), Seq(buoyData.toString -> importStatus.toString))) Some(importStatus)
         else {
           println(s"Error updating stationId $stationId to $importStatus.")
-          None
+          Some(ERROR)
         }
       case _ => {
         println(s"Unsupported import status: $importStatus")
@@ -74,9 +71,10 @@ class StationRepositorImpl(env: {
   }
 
   def getImportStatus(stationId: StationId, buoyData: BuoyData): Option[ImportStatus] = {
-    val status = redis.hmget(stationId.toString, buoyData.toString)
-    if (status.isDefined) ImportStatus.valueOf(status.get(buoyData.toString))
-    else None
+    val bdType = buoyData.toString.toUpperCase
+    redis.hmget(redisKey(stationId), bdType)
+      .flatMap(_.get(bdType))
+      .flatMap(ImportStatus.valueOf)
   }
 
   def initStations(): Unit = {
@@ -89,20 +87,28 @@ class StationRepositorImpl(env: {
     if (failures > 0) println(s"(Redis) SAVE >> $failures errors occurred")
   }
 
-  def readStations(): Seq[Any] = {
-    val total = filez.stationIds.length
-    val stations = filez.stationIds.map { sId =>
-      redis.hmget(redisKey(sId), stationIdField, freqField, lastReportField) match {
-        case s: Some[scala.collection.immutable.Map[String, String]] =>
-          val m = s.get
-          StationInfo(m(stationIdField), m(freqField), m(lastReportField))
-        case _ =>
-      }
+  val idToInfo: (StationId) => Option[StationInfo] = (staId: StationId) => {
+    val rc = redisKey(staId)
+    val hm: Option[Map[String, String]] = redis.hmget(rc, stationIdField, freqField, lastReportField)
+    hm match {
+      case Some(m: Map[String, String]) => for {
+        ff <- m get freqField
+        lrf <- m get lastReportField
+        sif <- m get stationIdField
+      } yield StationInfo(ff, lrf, sif)
+      case _ => None
     }
-    val errors = total - stations.length
-    println(s"(Redis) READ >> Read info for ${stations.length}/$total stations.")
+  }
+
+  def readStations(): Seq[StationInfo] = {
+    val total = filez.stationIds.length
+    val stationInfo = filez
+      .stationIds
+      .flatMap { id => idToInfo(id) }
+    val errors = total - stationInfo.length
+    println(s"(Redis) READ >> Read info for ${stationInfo.length}/$total stations.")
     if (errors > 0) println(s"(Redis) READ >> $errors errors occurred.")
-    stations
+    stationInfo
   }
 
   private[ubiquibit] def deleteStations(): Unit = {
@@ -118,15 +124,18 @@ class StationRepositorImpl(env: {
     if (failures > 0) println(s"(Redis) DELETE >> $failures errors occurred.")
   }
 
-  private[ubiquibit] def valueOf(stationId: String, reportFrequencyMinutes: Int = 0, lastReport: LocalDateTime = epochTimeZeroUTC()): Map[String, Any] = {
-    val m = Map(stationIdField -> stationId,
-      freqField -> reportFrequencyMinutes,
-      lastReportField -> lastReport.toInstant(TimeHelper.defaultOffset)
+  private[ubiquibit] def valueOf(stationId: String, reportFrequencyMinutes: Int = 0): Map[String, String] = {
+    val m: Map[String, String] = Map(stationIdField -> stationId,
+      freqField -> reportFrequencyMinutes.toString,
+      lastReportField -> TimeHelper.epochTimeZeroUTC().toString
     )
-    val zv = READY.toString.toUpperCase
-    val l = filez.supportedTypes
-      .map(_.ext.toUpperCase)
-      .zipAll(zv, zv, zv)
+    val rdy = READY.toString.toUpperCase
+    val l: Map[String, String] =
+      filez
+        .supportedTypes
+        .map(_.ext.toUpperCase)
+        .map(k => (k, rdy))
+        .toMap
     m ++ l
   }
 
