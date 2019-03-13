@@ -23,16 +23,18 @@ version := "1.0"
 
 // Want to use a published library in your project?
 // You can define other libraries as dependencies in your build like this:
-libraryDependencies += "org.typelevel" %% "cats-core" % "1.4.0"
-libraryDependencies += "org.apache.kafka" % "kafka-clients" % "2.1.1"
-libraryDependencies += "net.debasishg" %% "redisclient" % "3.9"
-libraryDependencies += "org.apache.spark" %% "spark-sql" % "2.4.0"
-libraryDependencies += "org.apache.spark" %% "spark-sql" % "2.4.0"
-libraryDependencies += "org.scalatest" %% "scalatest" % "3.2.0-SNAP10" % Test
-//libraryDependencies += "org.scalamock" %% "scalamock" % "4.1.0" % Test
-libraryDependencies += "com.typesafe" % "config" % "1.3.2"
-libraryDependencies += "org.scalacheck" %% "scalacheck" % "1.14.0" % Test
 
+libraryDependencies += "org.typelevel" %% "cats-core" % "1.4.0"
+libraryDependencies += "com.typesafe" % "config" % "1.3.2"
+
+libraryDependencies += "net.debasishg" %% "redisclient" % "3.9"
+
+libraryDependencies += "org.apache.spark" %% "spark-sql" % "2.4.0"
+
+libraryDependencies += "org.apache.kafka" %% "kafka" % "2.1.1"
+
+libraryDependencies += "org.scalatest" %% "scalatest" % "3.2.0-SNAP10" % Test
+libraryDependencies += "org.scalacheck" %% "scalacheck" % "1.14.0" % Test
 
 // Here, `libraryDependencies` is a set of dependencies, and by using `+=`,
 // we're adding the cats dependency to the set of dependencies that sbt will go

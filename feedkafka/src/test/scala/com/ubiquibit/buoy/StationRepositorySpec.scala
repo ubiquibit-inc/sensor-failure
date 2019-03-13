@@ -3,23 +3,16 @@ package com.ubiquibit.buoy
 import java.io.File
 
 import com.redis.RedisClient
-import com.redis.serialization.{Format, Parse}
-import com.ubiquibit.{FakeFile, Redis}
+import com.ubiquibit.{FakeFile, FakeRedis, FakeRedisClient, Redis}
 import org.scalatest.FunSpec
 import com.ubiquibit.buoy.StationId.makeStationId
 
 import scala.collection.immutable.HashMap
-import scala.util.Try
 
 class StationRepositorySpec extends FunSpec {
 
   /** manual mocking **/
-  val fileReckoning: FileReckoning = new FileReckoning {
-    override val stationIds: Seq[StationId] = List("abcdefg", "bcdefg").map(makeStationId)
-    override val supportByStation: Map[StationId, Seq[BuoyData]] = Map(stationIds.head -> Seq(Ocean, Text), stationIds(1) -> Seq(Text))
-
-    override def getFile(stationId: StationId, ofType: BuoyData): Option[File] = Some(new FakeFile(stationId.toString))
-  }
+  val fileReckoning: FileReckoning = new FakeFileReckoning
 
   val client: RedisClient = new FakeRedisClient
   private val fakeClient = client.asInstanceOf[FakeRedisClient]
@@ -45,9 +38,12 @@ class StationRepositorySpec extends FunSpec {
   describe("StationRepository should") {
 
     it("delete stations from redis") {
+
       instance.deleteStations()
       assert(fakeClient.delCount === fileReckoning.stationIds.length)
+
       reset
+
     }
 
     it("report import status") {
@@ -92,38 +88,10 @@ class StationRepositorySpec extends FunSpec {
 
       val result0 = instance.readStations()
 
+      // TODO improve me (a lot)
+
     }
 
-  }
-
-  class FakeRedis(rc: RedisClient) extends Redis {
-    override def client: RedisClient = rc
-  }
-
-  class FakeRedisClient extends RedisClient {
-
-    var hmgetResult: Map[Any, String] = Map.empty
-    var setCount = 0
-
-    override def hmset(key: Any, map: Iterable[Product2[Any, Any]])(implicit format: Format): Boolean = {
-      setCount = setCount + 1
-      true
-    }
-
-    var getCount = 0
-
-    override def hmget[K, V](key: Any, fields: K*)(implicit format: Format, parseV: Parse[V]): Option[Map[K, V]] = {
-      getCount = getCount + 1
-      if (hmgetResult.isEmpty) None
-      else Some(hmgetResult).asInstanceOf[Some[Map[K,V]]]
-    }
-
-    var delCount = 0
-
-    override def del(key: Any, keys: Any*)(implicit format: Format): Option[Long] = {
-      delCount = delCount + 1
-      None
-    }
   }
 
 }
