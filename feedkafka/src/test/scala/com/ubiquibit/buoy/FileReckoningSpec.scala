@@ -47,7 +47,7 @@ class FileReckoningSpec extends FunSpec {
     }
 
   describe("FileReckoning should") {
-    it("return a stationId per fixture file") {
+    it("return a stationId (where data file is in a supported format for said station)") {
 
       fixture
 
@@ -73,7 +73,7 @@ class FileReckoningSpec extends FunSpec {
 
     }
 
-    it("return a BuoyData for each station with a supported data feed") {
+    it("return BuoyData for each station with a supported data feed") {
 
       fixture
 

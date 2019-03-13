@@ -4,6 +4,9 @@ import com.typesafe.config.{Config, ConfigFactory}
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.SparkSession
 
+/**
+  * An injectable trait - we can later switch to the idiomatic *.implicits._ usage...
+  */
 trait Spark {
 
   def spark: SparkSession

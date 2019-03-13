@@ -3,8 +3,11 @@ package com.ubiquibit.buoy.jobs
 import com.ubiquibit.buoy.{FileReckoning, StationRepository}
 
 /**
-  * Creates a Redis system of record for information stored
-  * on disk.
+  * Interprets what's on disk and turns it into reference data in Redis.
+  *
+  * Another process is responsible for keeping the system up-to-date: This
+  * proc is intended as an administrative (bootstrap) one-off...
+  *
   */
 trait InitRedis {
 

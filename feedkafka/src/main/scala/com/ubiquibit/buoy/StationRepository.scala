@@ -6,7 +6,7 @@ import com.ubiquibit.{Redis, TimeHelper}
 import scala.collection.Map
 
 /**
-  * A repository for weather station.
+  * Weather station repository - online information about the stations in the system.
   */
 trait StationRepository {
 

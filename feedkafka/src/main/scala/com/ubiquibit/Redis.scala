@@ -4,7 +4,7 @@ import com.redis._
 import com.typesafe.config.{Config, ConfigFactory}
 
 /**
-  * Basic redis support...
+  * Basic redis support
   *
   * @see https://index.scala-lang.org/debasishg/scala-redis/redisclient/3.9?target=_2.12
   */

@@ -13,6 +13,9 @@ object TimeHelper {
     LocalDateTime.now(defaultOffset)
   }
 
+  /** A semaphore, so that we may simulate streaming (in absence of streaming) */
+  def effectiveNow(): LocalDateTime = ???
+
   /**
     * @return epoch time zero
     */

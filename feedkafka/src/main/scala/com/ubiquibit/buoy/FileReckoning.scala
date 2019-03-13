@@ -6,14 +6,12 @@ import StationId.makeStationId
 import com.typesafe.config.{Config, ConfigFactory}
 
 /**
-  * NDBC data is laid out in - let's call it a semantically-surprising way.
-  * This file is for some dead reckoning on the data that was downloaded, as
-  * described in the README.md file...
+  * Downloaded, NDBC realtime data and semantics can be harvested with the help of this util.
   */
 trait FileReckoning {
 
   /**
-    * A list of station ids - note: stations are not reported if they don't have a supported data feed
+    * A list of station ids - note: stations are not reported if they don't supply a supported data feed
     */
   def stationIds: Seq[StationId]
 
@@ -22,8 +20,17 @@ trait FileReckoning {
     */
   def supportByStation: Map[StationId, Seq[BuoyData]]
 
+  /**
+    * Return a local file reference for the related feed
+    * @param stationId for which we care
+    * @param ofType for which we pine
+    * @return a FQ file reference (or None-such)
+    */
   def getFile(stationId: StationId, ofType: BuoyData): Option[File]
 
+  /**
+    * @return these BuoyData types are supported by this system
+    */
   def supportedTypes: List[BuoyData] = List(Text) // TODO move to its own trait
 
 }
