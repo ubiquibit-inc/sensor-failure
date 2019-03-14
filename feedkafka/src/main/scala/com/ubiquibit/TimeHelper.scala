@@ -21,11 +21,15 @@ object TimeHelper {
   /**
     * @return epoch time zero
     */
-  def epochTimeZeroUTC() : LocalDateTime = {
+  def epochTimeZeroUTC(): LocalDateTime = {
     LocalDateTime.ofEpochSecond(0, 0, defaultOffset)
   }
 
-  private def toCal(ts: Timestamp): Calendar ={
+  def epochTimeZeroTimestamp(): Timestamp = {
+    Timestamp.valueOf(epochTimeZeroUTC())
+  }
+
+  private def toCal(ts: Timestamp): Calendar = {
     val cal = Calendar.getInstance
     cal.setTime(ts)
     cal
@@ -45,8 +49,9 @@ object TimeHelper {
 
   private val rand = scala.util.Random
 
-  def randomNap(): Unit = {
-    Thread.sleep(rand.nextInt(17750) + 250)
+  def randomNap(maxMillis: Int = 0): Unit = {
+    if (maxMillis == 0) Thread.sleep(rand.nextInt(17750) + 250)
+    else Thread.sleep(rand.nextInt(maxMillis))
   }
 
 }

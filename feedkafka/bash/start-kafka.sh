@@ -13,5 +13,3 @@ readonly ZK_HOSTS="localhost:2181"
 
 # ${KAFKA_HOME}/bin/kafka-topics.sh --create --zookeeper "${ZK_HOSTS}" --replication-factor 1 --partitions 1 --topic test
 # ${KAFKA_HOME}/bin/kafka-topics.sh --list --zookeeper "${ZK_HOSTS}"
-
-

@@ -15,9 +15,10 @@ trait Producer[WxRec <: WxRecord] {
 
   /**
     * Sends to Kafka
+    *
     * @param value
     */
-  def send(value: WxRec)
+  def send(value: WxRec, callback: Callback)
 
 }
 
@@ -46,7 +47,7 @@ class KafkaProducerImpl(stationId: StationId,
 
   val producer = new KafkaProducer[String, WxRecord](kafkaProps)
 
-  override def send(value: WxRecord): Unit = {
+  override def send(value: WxRecord, callback: Callback = callback): Unit = {
     val record = new ProducerRecord[String, WxRecord](topicName, value)
     producer.send(record, callback)
   }
@@ -54,10 +55,9 @@ class KafkaProducerImpl(stationId: StationId,
 
 object Producers {
 
-  def of(stationId: StationId, buoyData: BuoyData)(implicit stationRepository: StationRepository): Producer[WxRecord] = {
-    val cb = new ProducerCallback(stationRepository, stationId, buoyData)
-    // A callback per producer (instead of per message, which was how it was documented in the examples...?
-    new KafkaProducerImpl(stationId, buoyData, cb)
+  def of(stationId: StationId, buoyData: BuoyData, cb: Option[Callback] = None)(implicit stationRepository: StationRepository): Producer[WxRecord] = {
+    if (cb.isEmpty) new KafkaProducerImpl(stationId, buoyData, new ProducerCallback(stationRepository, stationId, buoyData))
+    else new KafkaProducerImpl(stationId, buoyData, cb.get)
   }
 
   class ProducerCallback(stationRepository: StationRepository, stationId: StationId, buoyData: BuoyData) extends Callback with Serializable {
