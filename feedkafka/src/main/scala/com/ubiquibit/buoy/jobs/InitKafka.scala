@@ -1,11 +1,10 @@
 package com.ubiquibit.buoy.jobs
 
-import java.sql.Timestamp
-
 import com.ubiquibit.buoy._
-import com.ubiquibit.Spark
-import org.apache.spark.SparkContext
-import org.apache.spark.sql.{DataFrame, Row, SparkSession}
+import com.ubiquibit.{Spark, TimeHelper}
+import com.ubiquibit.buoy.parse.TextParser
+
+import scala.util.Random
 
 /**
   * This util is for bootstrapping the system, and comes after Redis
@@ -28,26 +27,48 @@ class InitKafkaImpl(env: {
   val stationRepository: StationRepository
   val spark: Spark
   val fileReckoning: FileReckoning
-}) extends InitKafka{
+}) extends InitKafka with Serializable {
 
-  private val repo: StationRepository = env.stationRepository
-  private val spark: SparkSession = env.spark.spark
-  private val sc: SparkContext = env.spark.sc
-  private val filez: FileReckoning = env.fileReckoning
+  val repo: StationRepository = env.stationRepository
+  val filez: FileReckoning = env.fileReckoning
 
-  def run(): Unit ={
-    for ((sta, ft) <- filez.supportByStation) {
-      ft.foreach{ t =>
-        val f = filez.getFile(sta, t).get
-        val path = f.getAbsolutePath
-        val df = textToDF(path)
-        println(s"Created dataframe for $path")
-        df.show(30, truncate = false)
-      }
-    }
+  implicit val spark: Spark = env.spark
+
+  def hasFeedReady(si: StationInfo): Boolean = {
+    si.feeds.exists(_._2 == READY)
   }
 
-  def textToDF(fqFilename: String): DataFrame = {
-    ???
+  private val rand = scala.util.Random
+
+  def randomElemOf[T](seq: Seq[T]): Option[T] = {
+    if (seq.isEmpty) None
+    else seq lift rand.nextInt(seq.length)
   }
+
+  def run(): Unit = {
+
+    TimeHelper.randomNap() // so that everybody doesn't grab the same file
+
+    val poss: Seq[(StationId, BuoyData)] =
+      repo
+        .readStations()
+        .filter(_.feeds.exists(_._2 == READY))
+        .map(sta => (sta.stationId, sta.feeds))
+        .map { case ((record: (StationId, Map[BuoyData, ImportStatus]))) =>
+          val first = record._2.filter((m) => m._2 == READY).take(1).head
+          (record._1, first._1)
+        }
+
+    randomElemOf(poss).flatMap(t => {
+      val stationId = t._1
+      val buoyData = t._2
+      repo.updateImportStatus(stationId, buoyData, WORKING)
+      val file = filez.getFile(stationId, buoyData)
+      val parser = new TextParser
+      val df = parser.parse(file.get.getAbsolutePath)
+      repo.updateImportStatus(stationId, buoyData, DONE)
+    })
+
+  }
+
 }

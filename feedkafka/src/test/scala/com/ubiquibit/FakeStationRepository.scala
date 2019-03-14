@@ -10,7 +10,7 @@ class FakeStationRepository extends StationRepository {
     initCount = initCount + 1
   }
 
-  var readResponse: Seq[StationInfo] = Nil
+  var readResponse: Seq[StationInfo] = Seq()
 
   var readCount = 0
 

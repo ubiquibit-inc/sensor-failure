@@ -6,9 +6,7 @@ import com.ubiquibit.buoy.StationInfo
 
 class FakeRedisClient extends RedisClient {
 
-  var readStationResponse: Seq[StationInfo] = Seq()
-
-  var hmgetResult: Map[Any, String] = Map.empty
+  var hmgetResult: Seq[Map[Any, String]] = Seq()
   var setCount = 0
 
   override def hmset(key: Any, map: Iterable[Product2[Any, Any]])(implicit format: Format): Boolean = {

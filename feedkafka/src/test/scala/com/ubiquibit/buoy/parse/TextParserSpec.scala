@@ -1,4 +1,4 @@
-package com.ubiquibit.buoy.parsers
+package com.ubiquibit.buoy.parse
 
 import java.io.{File, PrintWriter}
 import java.nio.file.{Files, Path}

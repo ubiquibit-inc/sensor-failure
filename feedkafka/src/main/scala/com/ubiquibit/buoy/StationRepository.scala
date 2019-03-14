@@ -8,7 +8,7 @@ import scala.collection.Map
 /**
   * Weather station repository - online information about the stations in the system.
   */
-trait StationRepository {
+trait StationRepository extends Serializable{
 
   /**
     * Saves a record for each station represented in the data directory **with default values**.
@@ -87,7 +87,7 @@ class StationRepositorImpl(env: {
     if (failures > 0) println(s"(Redis) SAVE >> $failures errors occurred")
   }
 
-  val idToInfo: (StationId) => Option[StationInfo] = (staId: StationId) => {
+/*  val idToInfo: (StationId) => Option[StationInfo] = (staId: StationId) => {
     val rc = redisKey(staId)
     val hm: Option[Map[String, String]] = redis.hmget(rc, stationIdField, freqField, lastReportField)
     hm match {
@@ -99,16 +99,10 @@ class StationRepositorImpl(env: {
       case _ => None
     }
   }
+*/
 
-  def readStations(): Seq[StationInfo] = {
-    val total = filez.stationIds.length
-    val stationInfo = filez
-      .stationIds
-      .flatMap { id => idToInfo(id) }
-    val errors = total - stationInfo.length
-    println(s"(Redis) READ >> Read info for ${stationInfo.length}/$total stations.")
-    if (errors > 0) println(s"(Redis) READ >> $errors errors occurred.")
-    stationInfo
+  def readStations() : Seq[StationInfo] = {
+    Seq()
   }
 
   private[ubiquibit] def deleteStations(): Unit = {

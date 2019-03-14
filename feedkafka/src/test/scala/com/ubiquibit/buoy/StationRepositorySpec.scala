@@ -22,8 +22,7 @@ class StationRepositorySpec extends FunSpec with BeforeAndAfter {
     fakeClient.delCount = 0
     fakeClient.getCount = 0
     fakeClient.setCount = 0
-    fakeClient.hmgetResult = Map.empty
-    fakeClient.readStationResponse = Seq()
+    fakeClient.hmgetResult = Seq()
   }
 
   private val station0 = fileReckoning.stationIds.head
@@ -49,14 +48,14 @@ class StationRepositorySpec extends FunSpec with BeforeAndAfter {
       assert(mt === None)
       assert(fakeClient.getCount === 1)
 
-      fakeClient.hmgetResult = HashMap(station0type0.toString.toUpperCase -> READY.toString, station0type1.toString.toUpperCase -> READY.toString)
+      fakeClient.hmgetResult = Seq(HashMap(station0type0.toString.toUpperCase -> READY.toString, station0type1.toString.toUpperCase -> READY.toString))
       val result0 = instance.getImportStatus(station0, station0type0)
       assert(result0.isDefined)
       assert(fakeClient.getCount === 2)
       val status = result0.get
       assert(status === READY)
 
-      fakeClient.hmgetResult = station1ReadyResponse
+      fakeClient.hmgetResult = Seq(station1ReadyResponse)
       val result1 = instance.getImportStatus(station1, Ocean)
       assert(result1 === None)
       assert(fakeClient.getCount == 3)
@@ -70,7 +69,7 @@ class StationRepositorySpec extends FunSpec with BeforeAndAfter {
       assert(fakeClient.setCount === 0)
       assert(result0 === None)
 
-      fakeClient.hmgetResult = station1ReadyResponse
+      fakeClient.hmgetResult = Seq(station1ReadyResponse)
       val result1 = instance.updateImportStatus(station1, station1type0, DONE)
       assert(fakeClient.getCount === 2)
       assert(fakeClient.setCount === 1)
@@ -79,16 +78,14 @@ class StationRepositorySpec extends FunSpec with BeforeAndAfter {
 
     it("reads station info from redis") {
 
-      fakeClient.readStationResponse = Seq[StationInfo](
-        StationInfo(station1, 0, TimeHelper.epochTimeZeroUTC().toString, Map(Adcp -> READY, Adcp2 -> ERROR)),
-        StationInfo(station0, 0, TimeHelper.epochTimeZeroUTC().toString, Map(Text -> DONE, Hkp -> READY))
-      )
+      val s0 = StationInfo(station1, 0, TimeHelper.epochTimeZeroUTC().toString, Map(Adcp -> READY, Adcp2 -> ERROR))
+      val s1 = StationInfo(station0, 0, TimeHelper.epochTimeZeroUTC().toString, Map(Text -> DONE, Hkp -> READY))
+
+      fakeClient.hmgetResult = Seq(s0.toMap.asInstanceOf[Map[Any, String]], s1.toMap.asInstanceOf[Map[Any, String]])
 
       val result0 = instance.readStations()
 
-      val x = result0.map { sta: StationInfo =>
-        sta.feeds
-      }
+      assert(result0.length == 2)
 
     }
 

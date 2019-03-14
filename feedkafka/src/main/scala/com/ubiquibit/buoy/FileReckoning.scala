@@ -5,6 +5,8 @@ import java.io.File
 import StationId.makeStationId
 import com.typesafe.config.{Config, ConfigFactory}
 
+import scala.collection.Map
+
 /**
   * Downloaded, NDBC realtime data and semantics can be harvested with the help of this util.
   */

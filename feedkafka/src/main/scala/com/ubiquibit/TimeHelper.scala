@@ -43,4 +43,10 @@ object TimeHelper {
     toCal(ts).get(Calendar.MONTH)
   }
 
+  private val rand = scala.util.Random
+
+  def randomNap(): Unit = {
+    Thread.sleep(rand.nextInt(17750) + 250)
+  }
+
 }

@@ -9,18 +9,16 @@ import com.ubiquibit.Wiring
   *
   * a. Data have been downloaded to the data directory
   * b. Redis is running
-  * c. Kafka is operational (version-compatible with Scala 2.12)
   *
-  * Note: Settings for (a,b,c) can be specified in application.propoerties (or as JVM args)
+  * Note: Settings for (a,b) can be specified in application.propoerties (or as JVM args)
   *
   * P.S. Once bootstrapped, the system can drain off events from the Kafka queue,
-  * but it is up to a future author to write teh queue appenders.
+  * but it is up to a future author to write new appenders for the queue.
   */
 object Bootstrap {
 
   def main(args: Array[String]) = {
     Wiring.initRedis.run()
-    Wiring.initKafka.run()
   }
 
 }

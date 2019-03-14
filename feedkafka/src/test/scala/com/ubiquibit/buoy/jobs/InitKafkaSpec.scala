@@ -1,17 +1,29 @@
 package com.ubiquibit.buoy.jobs
 
-import com.ubiquibit.buoy.StationRepository
-import org.scalatest.FunSpec
+import com.ubiquibit.{FakeSpark, FakeStationRepository, Spark}
+import com.ubiquibit.buoy.{FakeFileReckoning, StationRepository}
+import org.scalatest.{BeforeAndAfter, FunSpec}
 
-class InitKafkaSpec extends FunSpec {
+class InitKafkaSpec extends FunSpec with BeforeAndAfter {
 
-  val repo: StationRepository = ???
+  val stationRepository: StationRepository = new FakeStationRepository
+  val fakeRepo = stationRepository.asInstanceOf[FakeStationRepository]
+  val spark: Spark = new FakeSpark
+  val fileReckoning = new FakeFileReckoning
+
+  val instance = new InitKafkaImpl(env = this)
+
+  after {
+    fakeRepo.readResponse = Seq()
+  }
 
   describe("InitKafka should") {
 
-    it("ask Redis for a file in the ready state") {
+    it("asks repo for StationInfo") {
 
-      val stations = repo.readStations()
+      instance.run()
+      assert(fakeRepo.readCount == 1)
+
     }
 
   }

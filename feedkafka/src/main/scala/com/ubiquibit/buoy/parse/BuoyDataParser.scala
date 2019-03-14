@@ -1,4 +1,4 @@
-package com.ubiquibit.buoy.parsers
+package com.ubiquibit.buoy.parse
 
 import java.sql.Timestamp
 
@@ -70,5 +70,11 @@ class TextParser extends BuoyDataParser with java.io.Serializable {
       l(11).toFloat, l(12).toFloat, l(13).toFloat, l(14).toFloat, l(15).toFloat, l(16).toFloat,
       l(17).toFloat, l(18).toFloat))
   }
+
+}
+
+object Parsers{
+
+
 
 }
