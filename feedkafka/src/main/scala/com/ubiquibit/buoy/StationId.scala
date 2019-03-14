@@ -6,7 +6,7 @@ import scala.util.Try
   * @see https://www.ndbc.noaa.gov/staid.shtml
   */
 sealed abstract class StationId(prefix: String, id: String){
-  override def toString = s"$prefix$id"
+  override def toString = s"$prefix$id".toUpperCase
 }
 
 case class BuoyId(prefix: Int, id: String) extends StationId(prefix.toString, id)

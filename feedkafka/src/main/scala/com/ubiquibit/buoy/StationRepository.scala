@@ -95,7 +95,7 @@ class StationRepositorImpl(env: {
         ff <- m get freqField
         lrf <- m get lastReportField
         sif <- m get stationIdField
-      } yield StationInfo(ff, lrf, sif)
+      } yield StationInfo(StationId.makeStationId(sif), ff.toInt, lrf)
       case _ => None
     }
   }

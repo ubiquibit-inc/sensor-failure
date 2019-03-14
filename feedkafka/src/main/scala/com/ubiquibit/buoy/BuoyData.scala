@@ -17,6 +17,7 @@ sealed abstract class BuoyData(extension: String){
 
 object BuoyData {
   val values: Set[BuoyData] = Set(Adcp, Adcp2, Cwind, Dart, DataSpec, Drift, Hkp, Ocean, Rain, Spec, Srad, Supl, Swr1, Swr2, Text, Undefined)
+  def valueOf(str: String) : Option[BuoyData] = values.find(_.ext.equalsIgnoreCase(str))
 }
 
 case object Adcp extends BuoyData("adcp")

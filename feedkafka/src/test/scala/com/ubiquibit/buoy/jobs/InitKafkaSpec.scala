@@ -1,18 +1,19 @@
 package com.ubiquibit.buoy.jobs
 
+import com.ubiquibit.buoy.StationRepository
 import org.scalatest.FunSpec
 
 class InitKafkaSpec extends FunSpec {
 
+  val repo: StationRepository = ???
+
   describe("InitKafka should") {
 
-    it("should synchronize topics between Redis and Kafka") {
-      assert( 1 === 2)
+    it("ask Redis for a file in the ready state") {
+
+      val stations = repo.readStations()
     }
 
-    it("or just dump the topic names to a flat-file, if necessary"){
-
-    }
   }
 
 }

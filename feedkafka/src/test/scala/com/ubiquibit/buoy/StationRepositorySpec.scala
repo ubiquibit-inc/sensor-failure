@@ -1,15 +1,13 @@
 package com.ubiquibit.buoy
 
-import java.io.File
-
 import com.redis.RedisClient
-import com.ubiquibit.{FakeFile, FakeRedis, FakeRedisClient, Redis}
-import org.scalatest.FunSpec
+import com.ubiquibit._
+import org.scalatest.{BeforeAndAfter, FunSpec}
 import com.ubiquibit.buoy.StationId.makeStationId
 
 import scala.collection.immutable.HashMap
 
-class StationRepositorySpec extends FunSpec {
+class StationRepositorySpec extends FunSpec with BeforeAndAfter {
 
   /** manual mocking **/
   val fileReckoning: FileReckoning = new FakeFileReckoning
@@ -20,11 +18,12 @@ class StationRepositorySpec extends FunSpec {
 
   val instance: StationRepository = new StationRepositorImpl(this)
 
-  def reset: Unit = {
+  after {
     fakeClient.delCount = 0
     fakeClient.getCount = 0
     fakeClient.setCount = 0
     fakeClient.hmgetResult = Map.empty
+    fakeClient.readStationResponse = Seq()
   }
 
   private val station0 = fileReckoning.stationIds.head
@@ -41,8 +40,6 @@ class StationRepositorySpec extends FunSpec {
 
       instance.deleteStations()
       assert(fakeClient.delCount === fileReckoning.stationIds.length)
-
-      reset
 
     }
 
@@ -64,7 +61,6 @@ class StationRepositorySpec extends FunSpec {
       assert(result1 === None)
       assert(fakeClient.getCount == 3)
 
-      reset
     }
 
     it("update import status") {
@@ -74,21 +70,25 @@ class StationRepositorySpec extends FunSpec {
       assert(fakeClient.setCount === 0)
       assert(result0 === None)
 
-      reset
-
       fakeClient.hmgetResult = station1ReadyResponse
       val result1 = instance.updateImportStatus(station1, station1type0, DONE)
-      assert(fakeClient.getCount === 1)
+      assert(fakeClient.getCount === 2)
       assert(fakeClient.setCount === 1)
 
-      reset
     }
 
     it("reads station info from redis") {
 
+      fakeClient.readStationResponse = Seq[StationInfo](
+        StationInfo(station1, 0, TimeHelper.epochTimeZeroUTC().toString, Map(Adcp -> READY, Adcp2 -> ERROR)),
+        StationInfo(station0, 0, TimeHelper.epochTimeZeroUTC().toString, Map(Text -> DONE, Hkp -> READY))
+      )
+
       val result0 = instance.readStations()
 
-      // TODO improve me (a lot)
+      val x = result0.map { sta: StationInfo =>
+        sta.feeds
+      }
 
     }
 

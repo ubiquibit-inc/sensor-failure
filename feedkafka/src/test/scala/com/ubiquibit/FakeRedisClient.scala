@@ -2,8 +2,11 @@ package com.ubiquibit
 
 import com.redis.RedisClient
 import com.redis.serialization.{Format, Parse}
+import com.ubiquibit.buoy.StationInfo
 
 class FakeRedisClient extends RedisClient {
+
+  var readStationResponse: Seq[StationInfo] = Seq()
 
   var hmgetResult: Map[Any, String] = Map.empty
   var setCount = 0

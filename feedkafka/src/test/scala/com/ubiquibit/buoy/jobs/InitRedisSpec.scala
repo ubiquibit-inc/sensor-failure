@@ -25,7 +25,7 @@ class InitRedisSpec extends FunSpec {
 
     it("do not too much when # stations in redis and # stations on disk is the same") {
 
-      fakeRepo.readResponse = Seq(StationInfo("abcd", 23.toString), StationInfo("xyzpdq", 42.toString))
+      fakeRepo.readResponse = Seq(StationInfo(StationId.makeStationId("abcd"), 23), StationInfo(StationId.makeStationId("xyzpdq"), 42))
       instance.run()
 
       reset
