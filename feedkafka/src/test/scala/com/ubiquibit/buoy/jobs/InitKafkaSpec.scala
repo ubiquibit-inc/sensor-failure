@@ -22,7 +22,7 @@ class InitKafkaSpec extends FunSpec with BeforeAndAfter {
     it("asks repo for StationInfo") {
 
       instance.run()
-      assert(fakeRepo.readCount == 1)
+      assert(fakeRepo.readStationsCount == 1)
 
     }
 

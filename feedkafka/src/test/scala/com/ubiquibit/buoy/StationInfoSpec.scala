@@ -2,14 +2,21 @@ package com.ubiquibit.buoy
 
 import com.ubiquibit.TimeHelper
 import org.scalatest.FunSpec
+import org.scalatest.words.ShouldVerb
 
-class StationInfoSpec extends FunSpec {
+class StationInfoSpec extends FunSpec with ShouldVerb{
 
-  val statId0 = StationId.makeStationId("asdb")
-  val statId1 = StationId.makeStationId("zyzuser")
+  private val statId0 = StationId.makeStationId("asdb")
+  private val statId1 = StationId.makeStationId("zyzuser")
 
   val simple = StationInfo(statId0, 123)
+
   val withFeeds = StationInfo(statId1, 234, TimeHelper.epochTimeZeroUTC().toString, Map(Rain -> DONE, Ocean -> READY))
+  private val withFeedsAsMap = Map[String, String](
+    StationInfo.stationIdKey -> statId1.toString,
+    StationInfo.reportFrequencyKey -> withFeeds.reportFrequencyMinutes.toString,
+    Rain.toString -> DONE.toString, Ocean.toString -> READY.toString
+  )
 
   describe("StationInfo should") {
 
@@ -27,14 +34,11 @@ class StationInfoSpec extends FunSpec {
 
     }
 
-    it("instatiate with valueOf") {
+    it("instantiate with valueOf") {
 
-      val input = Map(StationInfo.stationIdKey -> "zyzuser", StationInfo.reportFrequencyKey -> "234", "RAIN" -> "DONE", "OCEAN" -> "READY")
+      val result: StationInfo = StationInfo.valueOf(withFeedsAsMap).get
 
-      val result = StationInfo.valueOf(input)
-
-      assert(result.isDefined)
-      assert(result.get === withFeeds)
+      assert(result === withFeeds)
 
     }
   }

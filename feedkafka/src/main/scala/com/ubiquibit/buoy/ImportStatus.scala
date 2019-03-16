@@ -2,6 +2,7 @@ package com.ubiquibit.buoy
 
 sealed abstract class ImportStatus(description: String){
   def desc: String = description
+  override def toString: String = desc.toUpperCase
 }
 
 /**

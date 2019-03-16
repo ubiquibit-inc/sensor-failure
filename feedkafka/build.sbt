@@ -13,7 +13,7 @@ scalaVersion := "2.12.8"
 // It's possible to define many kinds of settings, such as:
 
 name := "feedkafka"
-organization := "com.ubiquibit"
+organization := "com.ubiquibit.sensorfailure"
 version := "1.0"
 
 // Note, it's not required for you to define these three settings. These are
@@ -24,23 +24,25 @@ version := "1.0"
 // Want to use a published library in your project?
 // You can define other libraries as dependencies in your build like this:
 
-libraryDependencies += "org.typelevel" %% "cats-core" % "1.4.0"
-libraryDependencies += "com.typesafe" % "config" % "1.3.2"
+libraryDependencies += "org.typelevel" %% "cats-core" % "1.4.0" withSources() withJavadoc()
+libraryDependencies += "com.typesafe" % "config" % "1.3.2" withSources() withJavadoc()
 
-libraryDependencies += "net.debasishg" %% "redisclient" % "3.9"
+libraryDependencies += "net.debasishg" %% "redisclient" % "3.9" withSources() withJavadoc()
 
-libraryDependencies += "org.apache.spark" %% "spark-sql" % "2.4.0"
+libraryDependencies += "org.apache.spark" %% "spark-sql" % "2.4.0" withSources() withJavadoc()
 
-libraryDependencies += "org.apache.kafka" %% "kafka" % "2.1.1"
+libraryDependencies += "org.apache.kafka" %% "kafka" % "2.1.1" withSources() withJavadoc()
 
-libraryDependencies += "org.scalatest" %% "scalatest" % "3.2.0-SNAP10" % Test
-libraryDependencies += "org.scalacheck" %% "scalacheck" % "1.14.0" % Test
+libraryDependencies += "org.scalatest" %% "scalatest" % "3.2.0-SNAP10" % Test withSources() withJavadoc()
+libraryDependencies += "org.scalacheck" %% "scalacheck" % "1.14.0" % Test withSources() withJavadoc()
 
 // Here, `libraryDependencies` is a set of dependencies, and by using `+=`,
 // we're adding the cats dependency to the set of dependencies that sbt will go
 // and fetch when it starts up.
 // Now, in any Scala file, you can import classes, objects, etc, from cats with
 // a regular import.
+
+//  XXX parallelExecution in Test := false
 
 // TIP: To find the "dependency" that you need to add to the
 // `libraryDependencies` set, which in the above example looks like this:

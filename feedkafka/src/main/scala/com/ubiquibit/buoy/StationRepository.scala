@@ -6,59 +6,54 @@ import com.ubiquibit.{Redis, TimeHelper}
 import scala.collection.Map
 
 /**
-  * Weather station repository - online information about the stations in the system.
+  * Weather station repository...
   */
-trait StationRepository extends Serializable{
-
-  /**
-    * Saves a record for each station represented in the data directory **with default values**.
-    */
-  def initStations(): Unit
+trait StationRepository extends Serializable {
 
   def readStations(): Seq[StationInfo]
 
-  /**
-    * @param stationId    an existing station id
-    * @param buoyData     any BuoyData type (except UNSUPPORTED)
-    * @param importStatus either WORKING, DONE or ERROR
-    */
-  def updateImportStatus(stationId: StationId, buoyData: BuoyData, importStatus: ImportStatus): Option[ImportStatus]
+  def readStation(stationId: StationId): Option[StationInfo]
 
-  /**
-    * @param stationId an existing stationid
-    * @param buoyData  some feed for it
-    * @return current status
-    */
   def getImportStatus(stationId: StationId, buoyData: BuoyData): Option[ImportStatus]
 
-  private[ubiquibit] def deleteStations(): Unit
+  def updateImportStatus(stationId: StationId, buoyData: BuoyData, importStatus: ImportStatus): Option[ImportStatus]
+
+  def deleteStations(): Boolean
+
+  def saveStation(stationInfo: StationInfo): Option[StationId]
 
 }
 
-class StationRepositorImpl(env: {
-  val fileReckoning: FileReckoning
+object StationRepository {
+
+  private[buoy] val stationKeyPattern = "stationId:"
+
+  private[buoy] def redisKey(stationId: StationId): String = {
+    require(stationId.toString.length > 3)
+    s"$stationKeyPattern$stationId"
+  }
+
+}
+
+class StationRepositoryImpl(env: {
   val redis: Redis
 }) extends StationRepository {
 
   private val redis: RedisClient = env.redis.client
-  private val filez: FileReckoning = env.fileReckoning
 
   // this is hacky, but I don't like the current serialization libraries for redis
   private val stationIdField = "stationId"
   private val freqField = "reportFrequencyMinutes"
   private val lastReportField = "lastReportUTC"
+  private val stationKeyPattern = StationRepository.stationKeyPattern
 
-  private def redisKey(stationId: StationId): String = {
-    require(stationId.toString.length > 3)
-    s"stationId:$stationId"
-  }
 
   def updateImportStatus(stationId: StationId, buoyData: BuoyData, importStatus: ImportStatus): Option[ImportStatus] = {
     if (stationExists(stationId).isEmpty) return None
     require(BuoyData.values.contains(buoyData))
     importStatus match {
       case ERROR | WORKING | DONE =>
-        if (redis.hmset(redisKey(stationId), Seq(buoyData.toString -> importStatus.toString))) Some(importStatus)
+        if (redis.hmset(StationRepository.redisKey(stationId), Seq(buoyData.toString -> importStatus.toString))) Some(importStatus)
         else {
           println(s"Error updating stationId $stationId to $importStatus.")
           Some(ERROR)
@@ -72,43 +67,38 @@ class StationRepositorImpl(env: {
 
   def getImportStatus(stationId: StationId, buoyData: BuoyData): Option[ImportStatus] = {
     val bdType = buoyData.toString.toUpperCase
-    redis.hmget(redisKey(stationId), bdType)
+    redis.hmget(StationRepository.redisKey(stationId), bdType)
       .flatMap(_.get(bdType))
       .flatMap(ImportStatus.valueOf)
   }
 
-  def initStations(): Unit = {
-    val total = filez.stationIds.length
-    val successes: Int = filez.stationIds
-      .map { s => redis.hmset(redisKey(s), valueOf(s.toString)) }
-      .count(_ == true)
-    val failures = total - successes
-    println(s"(Redis) SAVE >> Initialized $successes of $total stations.")
-    if (failures > 0) println(s"(Redis) SAVE >> $failures errors occurred")
+  def readStations(): Seq[StationInfo] = {
+    val keys = redis.keys(s"$stationKeyPattern*")
+      .map { k => k.filter(_.isDefined).map(_.get) }
+    if (keys.isEmpty) return Seq()
+    val strings: List[String] = keys.get.map(_.substring(stationKeyPattern.length))
+    strings.map(StationId.makeStationId).flatMap(readStation)
   }
 
-/*  val idToInfo: (StationId) => Option[StationInfo] = (staId: StationId) => {
-    val rc = redisKey(staId)
-    val hm: Option[Map[String, String]] = redis.hmget(rc, stationIdField, freqField, lastReportField)
-    hm match {
-      case Some(m: Map[String, String]) => for {
-        ff <- m get freqField
-        lrf <- m get lastReportField
-        sif <- m get stationIdField
-      } yield StationInfo(StationId.makeStationId(sif), ff.toInt, lrf)
-      case _ => None
+  def readStation(stationId: StationId): Option[StationInfo] = {
+    val result = redis.hmget(StationRepository.redisKey(stationId), StationInfo.fields: _*)
+    if (result.isDefined) {
+      StationInfo.valueOf(result.get)
     }
-  }
-*/
-
-  def readStations() : Seq[StationInfo] = {
-    Seq()
+    else None
   }
 
-  private[ubiquibit] def deleteStations(): Unit = {
-    val total = filez.stationIds.length
-    val deleted = filez.stationIds.map(sId =>
-      redis.del(redisKey(sId)) match {
+  def saveStation(stationInfo: StationInfo): Option[StationId] = {
+    val stationId = stationInfo.stationId
+    if (redis.hmset(StationRepository.redisKey(stationId), stationInfo.toMap)) Some(stationId)
+    else None
+  }
+
+  def deleteStations(): Boolean = {
+    val stations = readStations()
+    val total = stations.size
+    val deleted = stations.map(sId =>
+      redis.del(StationRepository.redisKey(sId.stationId)) match {
         case Some(d) => d
         case _ => 0
       }
@@ -116,26 +106,12 @@ class StationRepositorImpl(env: {
     val failures = total - deleted
     println(s"(Redis) DELETE >> Deleted $deleted of $total stations.")
     if (failures > 0) println(s"(Redis) DELETE >> $failures errors occurred.")
-  }
-
-  private[ubiquibit] def valueOf(stationId: String, reportFrequencyMinutes: Int = 0): Map[String, String] = {
-    val m: Map[String, String] = Map(stationIdField -> stationId,
-      freqField -> reportFrequencyMinutes.toString,
-      lastReportField -> TimeHelper.epochTimeZeroUTC().toString
-    )
-    val rdy = READY.toString.toUpperCase
-    val l: Map[String, String] =
-      filez
-        .supportedTypes
-        .map(_.ext.toUpperCase)
-        .map(k => (k, rdy))
-        .toMap
-    m ++ l
+    deleted > 0
   }
 
   // whether station is known to redis
   private def stationExists(stationId: StationId): Option[StationId] = {
-    if (redis.hmget(redisKey(stationId)).isDefined) Some(stationId)
+    if (redis.hmget(StationRepository.redisKey(stationId)).isDefined) Some(stationId)
     else None
   }
 

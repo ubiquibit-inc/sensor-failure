@@ -4,86 +4,81 @@ import java.io.File
 
 import StationId.makeStationId
 import com.typesafe.config.{Config, ConfigFactory}
+import com.ubiquibit.TimeHelper
 
 import scala.collection.Map
 
 /**
-  * Downloaded, NDBC realtime data and semantics can be harvested with the help of this util.
+  * Info about NDBC real-time data (stored on the filesystem)
+  * is served by this interface
   */
 trait FileReckoning {
 
-  /**
-    * A list of station ids - note: stations are not reported if they don't supply a supported data feed
-    */
-  def stationIds: Seq[StationId]
+  def stationIds(): Seq[StationId]
 
-  /**
-    * A map from StationId to it's supported BuoyData outputs (on disk)
-    */
-  def supportByStation: Map[StationId, Seq[BuoyData]]
+  // ALL feeds
+  def feeds(): Map[StationId, Seq[BuoyData]]
 
-  /**
-    * Return a local file reference for the related feed
-    * @param stationId for which we care
-    * @param ofType for which we pine
-    * @return a FQ file reference (or None-such)
-    */
-  def getFile(stationId: StationId, ofType: BuoyData): Option[File]
+  // only SUPPORTED feeds are included
+  def stationInfo(): Seq[StationInfo]
 
-  /**
-    * @return these BuoyData types are supported by this system
-    */
-  def supportedTypes: List[BuoyData] = List(Text) // TODO move to its own trait
+  // only SUPPORTED files
+  def getFile(stationId: StationId, feed: BuoyData): Option[File]
+
+  // only SUPPORTED files
+  def pairs(): List[(StationId, BuoyData)]
 
 }
 
-class FileReckoningImpl extends FileReckoning{
+trait SupportedFeeds {
+
+  def supported: List[BuoyData] = List(Text) // TODO load from Config instead, perhaps dynamically
+
+}
+
+class FileReckoningImpl extends FileReckoning with SupportedFeeds {
 
   import java.io.File
 
   private val config: Config = ConfigFactory.load()
-  private [buoy] val buoyData = s"${config.getString("bouy.data.subdir")}"
+  private[buoy] val buoyData = s"${config.getString("buoy.data.subdir")}"
   private val buoyDataDirectory = s"${config.getString("data.directory")}$buoyData"
 
-  override val supportedTypes: List[BuoyData] = List(Text)
-  private val filenameSupported: (String) => Boolean = { absolutePath => supportedTypes.exists(_.same(new File(absolutePath))) }
+  private val filenameSupported: (String) => Boolean = { absolutePath => supported.exists(_.same(new File(absolutePath))) }
 
   def getFile(stationId: StationId, ofType: BuoyData): Option[File] = {
-    if( !supportByStation().exists(_._1 == stationId) ) None
+    if (!feeds.exists(_._1 == stationId)) None
     val expectedName = s"${stationId.toString}.${ofType.ext}".toUpperCase
-    supportedFiles.find{ _.getName.equalsIgnoreCase(expectedName) }
+    supportedFiles.find {
+      _.getName.equalsIgnoreCase(expectedName)
+    }
   }
 
-  def stationIds: Seq[StationId] = pairs().map(_._1).distinct
+  def stationIds(): Seq[StationId] = pairs().map(_._1).distinct
 
-  def supportByStation(): Map[StationId, Seq[BuoyData]] = {
+  def feeds(): Map[StationId, Seq[BuoyData]] = {
     pairs().groupBy(_._1).mapValues(_.map(_._2))
   }
 
+  def stationInfo(): Seq[StationInfo] = {
+    pairs()
+      .groupBy(_._1)
+      .map { (t) =>
+        val staId = t._1
+        val feeds = t._2
+        (staId, feeds.filter(_._1 == staId).map(_._2 -> READY).toMap)
+        }.map(u => StationInfo(u._1, 0, TimeHelper.epochTimeZeroUTC().toString, u._2))
+      .toSeq
+  }
+
   // all station/output files on disk
-  private def pairs(): List[(StationId, BuoyData)] = {
+  def pairs(): List[(StationId, BuoyData)] = {
     supportedFiles
       .map(f => f.getName)
       .map(_.split("\\."))
-      .map { arr => (makeStationId(arr(0)), BuoyData.values.find(_.ext.equalsIgnoreCase(arr(1))).getOrElse(Undefined)) }
-      .filterNot(_._2 == Undefined) // hacky
-  }
-
-  // All filenames in the dataset.
-  private def filenames(dirName: String = buoyDataDirectory, fq: Boolean = false, pred: (File) => Boolean = (_) => true): List[String] = {
-
-    val shipFileName = "ship_obs.txt"
-    val skipShips: (File) => Boolean = (f: File) => !f.getName.equals(shipFileName)
-
-    val file = new File(dirName)
-    val names = file.listFiles
-      .filter(_.isFile)
-      .filter(pred)
-      .filter(skipShips)
-      .map(_.getName)
-
-    if (fq) names.map(fn => s"$buoyDataDirectory$fn").toList
-    else names.toList
+      .map { arr => (makeStationId(arr(0)), BuoyData.values.find(_.ext.equalsIgnoreCase(arr(1)))) }
+      .filter(_._2.isDefined)
+      .map((a) => (a._1, a._2.get))
   }
 
   // @return a list of files sitting on disk
@@ -91,6 +86,23 @@ class FileReckoningImpl extends FileReckoning{
     filenames(fq = true)
       .filter(filenameSupported)
       .map(new File(_))
+  }
+
+  // All filenames in the data set.
+  private def filenames(dirName: String = buoyDataDirectory, fq: Boolean = false, p: (File) => Boolean = (_) => true): List[String] = {
+
+    val shipFileName = "ship_obs.txt"
+    val skipShips: (File) => Boolean = (f: File) => !f.getName.equals(shipFileName)
+
+    val file = new File(dirName)
+    val names = file.listFiles
+      .filter(_.isFile)
+      .filter(p)
+      .filter(skipShips)
+      .map(_.getName)
+
+    if (fq) names.map(fn => s"$buoyDataDirectory$fn").toList
+    else names.toList
   }
 
 }

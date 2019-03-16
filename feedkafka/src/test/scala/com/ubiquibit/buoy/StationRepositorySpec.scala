@@ -9,54 +9,61 @@ import scala.collection.immutable.HashMap
 
 class StationRepositorySpec extends FunSpec with BeforeAndAfter {
 
-  /** manual mocking **/
-  val fileReckoning: FileReckoning = new FakeFileReckoning
-
   val client: RedisClient = new FakeRedisClient
   private val fakeClient = client.asInstanceOf[FakeRedisClient]
   val redis: Redis = new FakeRedis(client)
 
-  val instance: StationRepository = new StationRepositorImpl(this)
+  val instance: StationRepository = new StationRepositoryImpl(this)
 
   after {
     fakeClient.delCount = 0
     fakeClient.getCount = 0
     fakeClient.setCount = 0
-    fakeClient.hmgetResult = Seq()
+    fakeClient.fakeHmgetResult = Map()
+    fakeClient.keysCount = 0
+    fakeClient.fakeKeys = None
   }
 
-  private val station0 = fileReckoning.stationIds.head
-  private val station1 = fileReckoning.stationIds(1)
-  private val station0type0 = fileReckoning.supportByStation(station0).head
-  private val station0type1 = fileReckoning.supportByStation(station0).tail.head
-  private val station1type0 = fileReckoning.supportByStation(station1).head
+  private val stationId0 = StationId.makeStationId("abcdefg")
+  private val station0type0 = Ocean
+  private val station0type1 = Adcp2
+  private val station0Info = StationInfo(stationId0, 0, feeds = Map[BuoyData, ImportStatus](station0type0 -> READY, station0type1 -> UNSUPPORTED))
 
-  private val station1ReadyResponse = HashMap[Any, String](station1type0.toString.toUpperCase -> READY.toString)
+  private val stationId1 = StationId.makeStationId("xyqpdq")
+  private val station1type0 = Text
+
+  private val station1ReadyResponse = HashMap[String, String](station1type0.toString.toUpperCase -> READY.toString)
 
   describe("StationRepository should") {
 
     it("delete stations from redis") {
 
+      fakeClient.fakeKeys = Some(List(Some(s"stationId:$stationId0"))) //, Some(s"stationId:$station1")))
+      fakeClient.fakeHmgetResult = station0Info.toMap //, station1Info.toMap.asInstanceOf[Map[Any, String]])
+
       instance.deleteStations()
-      assert(fakeClient.delCount === fileReckoning.stationIds.length)
+
+      assert(fakeClient.keysCount === 1)
+      assert(fakeClient.getCount === 1)
+      assert(fakeClient.delCount === 1)
 
     }
 
-    it("report import status") {
+    it("return import status") {
 
       val mt = instance.getImportStatus(makeStationId("aadbkasjdgbj"), BuoyData.values.head)
       assert(mt === None)
       assert(fakeClient.getCount === 1)
 
-      fakeClient.hmgetResult = Seq(HashMap(station0type0.toString.toUpperCase -> READY.toString, station0type1.toString.toUpperCase -> READY.toString))
-      val result0 = instance.getImportStatus(station0, station0type0)
+      fakeClient.fakeHmgetResult = HashMap(station0type0.toString.toUpperCase -> READY.toString, station0type1.toString.toUpperCase -> READY.toString)
+      val result0 = instance.getImportStatus(stationId0, station0type0)
       assert(result0.isDefined)
       assert(fakeClient.getCount === 2)
       val status = result0.get
       assert(status === READY)
 
-      fakeClient.hmgetResult = Seq(station1ReadyResponse)
-      val result1 = instance.getImportStatus(station1, Ocean)
+      fakeClient.fakeHmgetResult = station1ReadyResponse
+      val result1 = instance.getImportStatus(stationId1, Ocean)
       assert(result1 === None)
       assert(fakeClient.getCount == 3)
 
@@ -69,8 +76,8 @@ class StationRepositorySpec extends FunSpec with BeforeAndAfter {
       assert(fakeClient.setCount === 0)
       assert(result0 === None)
 
-      fakeClient.hmgetResult = Seq(station1ReadyResponse)
-      val result1 = instance.updateImportStatus(station1, station1type0, DONE)
+      fakeClient.fakeHmgetResult = station1ReadyResponse
+      val result1 = instance.updateImportStatus(stationId1, station1type0, DONE)
       assert(fakeClient.getCount === 2)
       assert(fakeClient.setCount === 1)
 
@@ -78,14 +85,17 @@ class StationRepositorySpec extends FunSpec with BeforeAndAfter {
 
     it("reads station info from redis") {
 
-      val s0 = StationInfo(station1, 0, TimeHelper.epochTimeZeroUTC().toString, Map(Adcp -> READY, Adcp2 -> ERROR))
-      val s1 = StationInfo(station0, 0, TimeHelper.epochTimeZeroUTC().toString, Map(Text -> DONE, Hkp -> READY))
+      val s0 = StationInfo(stationId1, 0, TimeHelper.epochTimeZeroUTC().toString, Map(Adcp -> READY, Adcp2 -> ERROR))
+      val s1 = StationInfo(stationId0, 0, TimeHelper.epochTimeZeroUTC().toString, Map(Text -> DONE, Hkp -> READY))
 
-      fakeClient.hmgetResult = Seq(s0.toMap.asInstanceOf[Map[Any, String]], s1.toMap.asInstanceOf[Map[Any, String]])
+      fakeClient.fakeKeys = Some(List(Some(StationRepository.redisKey(stationId0)), Some(StationRepository.redisKey(stationId1))))
+      fakeClient.fakeHmgetResult = s0.toMap //, s1.toMap)
 
       val result0 = instance.readStations()
 
-      assert(result0.length == 2)
+      assert(fakeClient.keysCount === 1)
+
+      assert(result0.length === 2)
 
     }
 

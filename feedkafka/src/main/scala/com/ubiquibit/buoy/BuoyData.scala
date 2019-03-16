@@ -13,10 +13,11 @@ import java.io.File
 sealed abstract class BuoyData(extension: String){
   def same(file: File): Boolean = file.getName.endsWith(extension)
   def ext: String = extension
+  override def toString = ext.toUpperCase
 }
 
 object BuoyData {
-  val values: Set[BuoyData] = Set(Adcp, Adcp2, Cwind, Dart, DataSpec, Drift, Hkp, Ocean, Rain, Spec, Srad, Supl, Swr1, Swr2, Text, Undefined)
+  val values: Set[BuoyData] = Set(Adcp, Adcp2, Cwind, Dart, DataSpec, Drift, Hkp, Ocean, Rain, Spec, Srad, Supl, Swr1, Swr2, Text)
   def valueOf(str: String) : Option[BuoyData] = values.find(_.ext.equalsIgnoreCase(str))
 }
 
@@ -36,5 +37,3 @@ case object Swdir extends BuoyData("swdir")
 case object Swr1 extends BuoyData("swr1")
 case object Swr2 extends BuoyData("swr2")
 case object Text extends BuoyData("txt")
-
-case object Undefined extends BuoyData("undefined") // TODO remove!

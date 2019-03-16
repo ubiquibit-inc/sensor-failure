@@ -13,13 +13,17 @@ class FileReckoningSpec extends FunSpec {
 
   val (fmt0, fmt1) = (Ocean, Swr2)
 
-  val instance: FileReckoning = new FileReckoning {
+  val instance: FileReckoning with SupportedFeeds = new FileReckoning with SupportedFeeds {
 
     override def stationIds: Seq[StationId] = Seq("abcde", "123123").map(makeStationId)
 
-    override def supportByStation: Map[StationId, Seq[BuoyData]] = Map(stationIds.head -> Seq(fmt1, fmt0), stationIds(1) -> Seq(fmt1))
+    override def feeds: Map[StationId, Seq[BuoyData]] = Map(stationIds.head -> Seq(fmt1, fmt0), stationIds()(1) -> Seq(fmt1))
 
     override def getFile(stationId: StationId, ofType: BuoyData): Option[File] = Some(new FakeFile(stationId.toString))
+
+    override def stationInfo(): Seq[StationInfo] = ???
+
+    override def pairs(): List[(StationId, BuoyData)] = ???
   }
 
   val config: Config = ConfigFactory.load()
@@ -34,11 +38,11 @@ class FileReckoningSpec extends FunSpec {
   private def fixture =
     new {
       private val dir = config.getString("data.directory")
-      private val subdir = config.getString("bouy.data.subdir")
+      private val subdir = config.getString("buoy.data.subdir")
       private val f = new File(s"$dir$subdir")
       assert(f.exists || f.mkdirs())
       assert(f.exists && f.canWrite)
-      private val created = instance.supportedTypes.map { t =>
+      private val created = instance.supported.map { t =>
         createIfNecessary(f, "abcdef." + t.ext)
         createIfNecessary(f, "bcdefg." + t.ext)
         createIfNecessary(f, "cdefgh." + t.ext)
@@ -62,7 +66,7 @@ class FileReckoningSpec extends FunSpec {
       fixture
 
       val stationId = instance.stationIds.head
-      val typeOf = instance.supportedTypes.head
+      val typeOf = instance.supported.head
 
       val result = instance.getFile(stationId, typeOf)
 
@@ -77,7 +81,7 @@ class FileReckoningSpec extends FunSpec {
 
       fixture
 
-      val result = instance.supportByStation
+      val result = instance.feeds
 
       assert(result.count(_._2.contains(Swr2)) === 2)
       assert(result.count(_._2.contains(Ocean)) === 1)

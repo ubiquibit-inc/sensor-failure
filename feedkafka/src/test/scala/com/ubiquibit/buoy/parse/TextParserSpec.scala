@@ -11,8 +11,6 @@ class TextParserSpec extends FunSpec with BeforeAndAfter {
 
   val instance = new TextParser
 
-  implicit val spark: Spark = new SparkImpl
-
   val exampleTextData: String =
     """|#YY  MM DD hh mm WDIR WSPD GST  WVHT   DPD   APD MWD   PRES  ATMP  WTMP  DEWP  VIS PTDY  TIDE
        |#yr  mo dy hr mn degT m/s  m/s     m   sec   sec degT   hPa  degC  degC  degC  nmi  hPa    ft
@@ -43,11 +41,13 @@ class TextParserSpec extends FunSpec with BeforeAndAfter {
 
       Thread.sleep(2500) // wait for write to complete...
 
-      val df = instance.parse(file.getAbsolutePath)
+      //      val df = instance.parse(file.getAbsolutePath)
 
-      df.printSchema()
+      //      df.printSchema()
 
-      assert(df.count() == 1)
+      //      assert(df.count() == 1)
+
+      assert(1 === 2)
 
     }
 

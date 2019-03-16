@@ -4,18 +4,12 @@ import com.ubiquibit.buoy._
 
 class FakeStationRepository extends StationRepository {
 
-  var initCount = 0
-
-  override def initStations(): Unit = {
-    initCount = initCount + 1
-  }
-
   var readResponse: Seq[StationInfo] = Seq()
 
-  var readCount = 0
+  var readStationsCount = 0
 
   override def readStations(): Seq[StationInfo] = {
-    readCount = readCount + 1
+    readStationsCount = readStationsCount + 1
     readResponse
   }
 
@@ -25,8 +19,18 @@ class FakeStationRepository extends StationRepository {
 
   var deleteCount = 0
 
-  override private[ubiquibit] def deleteStations(): Unit = {
+  override def deleteStations(): Boolean = {
     deleteCount = deleteCount + 1
+    true
+  }
+
+  override def readStation(stationId: StationId): Option[StationInfo] = ???
+
+  var saveCount = 0
+
+  override def saveStation(stationInfo: StationInfo): Option[StationId] = {
+    saveCount = saveCount + 1
+    Some(stationInfo.stationId)
   }
 
 }

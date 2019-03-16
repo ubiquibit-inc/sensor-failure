@@ -1,6 +1,6 @@
 package com.ubiquibit.buoy.jobs
 
-import com.ubiquibit.buoy.{FileReckoning, StationRepository}
+import com.ubiquibit.buoy._
 
 /**
   * Interprets what's on disk and turns it into reference data in Redis.
@@ -27,25 +27,34 @@ class InitRedisImpl(env: {
   private val repo: StationRepository = env.stationRepository
 
   def run(): Unit = {
-    println(s"${filez.stationIds.length} stations detected on disk.")
 
     val stationIds = filez.stationIds
-    var stations = repo.readStations()
+    println(s"${stationIds.length} stations detected on disk.")
+
+    val stations = repo.readStations()
+    println(s"${stations.length} stations are in Redis.")
 
     if (stations.isEmpty) {
       println("Redis has no station information, creating...")
-      repo.initStations()
-      stations = repo.readStations()
+      val savedCount = saveStations()
+      println(s"Saved $savedCount stations to Redis.")
     }
 
-    if (stations.length != stationIds.length) {
+    if (repo.readStations().length != stationIds.length) {
       println(s"Mismatch between ${stations.length} stations in Redis and ${stationIds.length} on disk, wiping Redis and starting over.")
       repo.deleteStations()
-      repo.initStations()
+      val savedCount = saveStations()
+      println(s"Saved $savedCount stations to Redis.")
     }
 
     println("Exiting.")
 
+  }
+
+  def saveStations(): Int = {
+    val successes = for (st <- filez.stationInfo())
+      yield repo.saveStation(st)
+    successes.count(_.isDefined)
   }
 
 }
