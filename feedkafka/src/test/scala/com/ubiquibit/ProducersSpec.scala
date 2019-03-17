@@ -1,6 +1,6 @@
 package com.ubiquibit
 
-import com.ubiquibit.buoy.{StationId, Text, TextRecord, WxRecord}
+import com.ubiquibit.buoy._
 import org.apache.kafka.clients.producer.{Callback, RecordMetadata}
 import org.scalatest.{BeforeAndAfter, FunSpec}
 
@@ -11,7 +11,7 @@ class ProducersSpec extends FunSpec with BeforeAndAfter {
   private val testCallback = new TestCallback
   private val testRecord = TextRecord(TimeHelper.epochTimeZeroTimestamp(), rF(), rF(), rF(), rF(), rF(), rF(), rF(), rF(), rF(), rF(), rF(), rF(), rF(), rF())
 
-  implicit def stationRepository = new FakeStationRepository
+  implicit def stationRepository: StationRepository = new FakeStationRepository
 
   def rF(): Float = {
     Random.nextFloat()
