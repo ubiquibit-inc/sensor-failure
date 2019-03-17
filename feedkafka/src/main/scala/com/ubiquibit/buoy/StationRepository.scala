@@ -111,7 +111,7 @@ class StationRepositoryImpl(env: {
 
   // whether station is known to redis
   private def stationExists(stationId: StationId): Option[StationId] = {
-    if (redis.hmget(StationRepository.redisKey(stationId)).isDefined) Some(stationId)
+    if (redis.keys(StationRepository.redisKey(stationId)).isDefined) Some(stationId)
     else None
   }
 

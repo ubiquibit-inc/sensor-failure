@@ -4,18 +4,25 @@ import com.ubiquibit.buoy._
 
 class FakeStationRepository extends StationRepository {
 
-  var readResponse: Seq[StationInfo] = Seq()
+  def reset{
+    readStationsCount = 0
+    readStationsResponse = Seq()
+    deleteCount = 0
+    saveCount = 0
+  }
+
+  var readStationsResponse: Seq[StationInfo] = Seq()
 
   var readStationsCount = 0
 
   override def readStations(): Seq[StationInfo] = {
     readStationsCount = readStationsCount + 1
-    readResponse
+    readStationsResponse
   }
 
-  override def updateImportStatus(stationId: StationId, buoyData: BuoyData, importStatus: ImportStatus): Option[ImportStatus] = throw new NullPointerException("updateImportStatus")
+  override def updateImportStatus(stationId: StationId, buoyData: BuoyData, importStatus: ImportStatus): Option[ImportStatus] = throw new UnsupportedOperationException("updateImportStatus")
 
-  override def getImportStatus(stationId: StationId, buoyData: BuoyData): Option[ImportStatus] = throw new NullPointerException("getImportStatus")
+  override def getImportStatus(stationId: StationId, buoyData: BuoyData): Option[ImportStatus] = throw new UnsupportedOperationException("getImportStatus")
 
   var deleteCount = 0
 

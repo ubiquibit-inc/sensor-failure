@@ -6,6 +6,15 @@ import com.ubiquibit.buoy.StationInfo
 
 class FakeRedisClient extends RedisClient {
 
+  def reset() = {
+    setCount = 0
+    getCount = 0
+    delCount = 0
+    keysCount = 0
+    fakeHmgetResult = Map()
+    fakeKeys = None
+  }
+
   var setCount = 0
   override def hmset(key: Any, map: Iterable[Product2[Any, Any]])(implicit format: Format): Boolean = {
     setCount = setCount + 1

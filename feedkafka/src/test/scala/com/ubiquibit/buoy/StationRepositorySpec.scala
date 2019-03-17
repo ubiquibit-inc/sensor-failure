@@ -16,12 +16,7 @@ class StationRepositorySpec extends FunSpec with BeforeAndAfter {
   val instance: StationRepository = new StationRepositoryImpl(this)
 
   after {
-    fakeClient.delCount = 0
-    fakeClient.getCount = 0
-    fakeClient.setCount = 0
-    fakeClient.fakeHmgetResult = Map()
-    fakeClient.keysCount = 0
-    fakeClient.fakeKeys = None
+    fakeClient.reset()
   }
 
   private val stationId0 = StationId.makeStationId("abcdefg")
@@ -72,13 +67,15 @@ class StationRepositorySpec extends FunSpec with BeforeAndAfter {
     it("update import status") {
 
       val result0 = instance.updateImportStatus(makeStationId("abababa"), BuoyData.values.head, READY)
-      assert(fakeClient.getCount === 1) // checking for station existence in Redis
+      assert(fakeClient.keysCount === 1)
       assert(fakeClient.setCount === 0)
       assert(result0 === None)
 
+      fakeClient.reset()
       fakeClient.fakeHmgetResult = station1ReadyResponse
+      fakeClient.fakeKeys = Some(List(Some(stationId1.toString)))
       val result1 = instance.updateImportStatus(stationId1, station1type0, DONE)
-      assert(fakeClient.getCount === 2)
+      assert(fakeClient.keysCount === 1)
       assert(fakeClient.setCount === 1)
 
     }

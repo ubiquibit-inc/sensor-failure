@@ -4,8 +4,6 @@ import com.ubiquibit.buoy._
 import com.ubiquibit.{Spark, TimeHelper}
 import com.ubiquibit.buoy.parse.TextParser
 
-import scala.util.Random
-
 /**
   * This util is for bootstrapping the system, and comes after Redis
   * has been initialized. It's a one-off operation, it:
@@ -29,16 +27,15 @@ class InitKafkaImpl(env: {
   val fileReckoning: FileReckoning
 }) extends InitKafka with Serializable {
 
-  val repo: StationRepository = env.stationRepository
-  val filez: FileReckoning = env.fileReckoning
+  private val repo: StationRepository = env.stationRepository
+  private val filez: FileReckoning = env.fileReckoning
+  private val rand = scala.util.Random
 
   implicit val spark: Spark = env.spark
 
   def hasFeedReady(si: StationInfo): Boolean = {
     si.feeds.exists(_._2 == READY)
   }
-
-  private val rand = scala.util.Random
 
   def randomElemOf[T](seq: Seq[T]): Option[T] = {
     if (seq.isEmpty) None
@@ -47,25 +44,36 @@ class InitKafkaImpl(env: {
 
   def run(): Unit = {
 
-    TimeHelper.randomNap() // so that everybody doesn't grab the same file
+    TimeHelper.randomNap()
 
-    val poss: Seq[(StationId, BuoyData)] =
+    // ^^^ so that everybody doesn't grab the same file
+    // this is by no means a guarantee, but is good enough
+    // for now
+
+    val candidates: Seq[(StationId, BuoyData)] =
       repo
         .readStations()
-        .filter(_.feeds.exists(_._2 == READY))
+        .filter(hasFeedReady)
         .map(sta => (sta.stationId, sta.feeds))
         .map { case ((record: (StationId, Map[BuoyData, ImportStatus]))) =>
           val first = record._2.filter((m) => m._2 == READY).take(1).head
           (record._1, first._1)
         }
 
-    randomElemOf(poss).flatMap(t => {
+    randomElemOf(candidates).foreach(t => {
+
       val stationId = t._1
       val buoyData = t._2
+
       repo.updateImportStatus(stationId, buoyData, WORKING)
+
+      println(s"Processing $stationId's $buoyData feed.")
       val file = filez.getFile(stationId, buoyData)
       val parser = new TextParser
       val df = parser.parse(file.get.getAbsolutePath)
+      val cnt = df.count()
+      println(s"Processed $cnt lines of $stationId's $buoyData feed.")
+
       repo.updateImportStatus(stationId, buoyData, DONE)
     })
 

@@ -23,11 +23,7 @@ class InitRedisSpec
 
   after {
 
-    fakeRepo.readResponse = Seq()
-
-    fakeRepo.readStationsCount = 0
-    fakeRepo.deleteCount = 0
-    fakeRepo.saveCount = 0
+    fakeRepo.reset
 
     fakeFilez.fakeStationInfo = Seq()
     fakeFilez.fakeStationIds = Seq()
@@ -44,7 +40,7 @@ class InitRedisSpec
 
     it("do NOT MUCH when station count in redis and on disk are the same") {
 
-      fakeRepo.readResponse = Seq(si0, si1)
+      fakeRepo.readStationsResponse = Seq(si0, si1)
       fakeFilez.fakeStationIds = Seq(si0.stationId, si1.stationId)
 
       instance.run()
@@ -57,7 +53,7 @@ class InitRedisSpec
 
     it("initialize if # stations in redis is < # stations on disk") {
 
-      fakeRepo.readResponse = Seq[StationInfo](si1)
+      fakeRepo.readStationsResponse = Seq[StationInfo](si1)
       fakeFilez.fakeStationInfo = Seq(si0, si1)
 
       instance.run()
@@ -70,7 +66,7 @@ class InitRedisSpec
 
     it("saves once if DB is empty") {
 
-      fakeRepo.readResponse = Seq()
+      fakeRepo.readStationsResponse = Seq()
       fakeFilez.fakeStationInfo = Seq(si0, si1)
 
       instance.run()

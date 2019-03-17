@@ -3,7 +3,7 @@ package com.ubiquibit.buoy.parse
 import java.io.{File, PrintWriter}
 import java.nio.file.{Files, Path}
 
-import com.ubiquibit.{Spark, SparkImpl, TimeHelper}
+import com.ubiquibit._
 import org.apache.spark.sql.Row
 import org.scalatest.{BeforeAndAfter, FunSpec}
 
@@ -37,20 +37,6 @@ class TextParserSpec extends FunSpec with BeforeAndAfter {
 
   describe("TextParser should") {
 
-    ignore("parse BuoyData text files") {
-
-      Thread.sleep(2500) // wait for write to complete...
-
-      //      val df = instance.parse(file.getAbsolutePath)
-
-      //      df.printSchema()
-
-      //      assert(df.count() == 1)
-
-      assert(1 === 2)
-
-    }
-
     it("parse a single record") {
 
       val row: Row = instance.processLine(payload)
@@ -82,6 +68,21 @@ class TextParserSpec extends FunSpec with BeforeAndAfter {
 
       assert(Math.abs(f(13) + 1.3) < epsilon)
       assert(f(14).isNaN)
+    }
+
+    ignore("parses a problem file...") { // turned off for speediness
+
+
+      val filename = "BDRN4.txt"
+      val ddir = "/Users/jason/scratch/sensor-failure/data/www.ndbc.noaa.gov/data/realtime2"
+      val fqFn = s"$ddir/$filename"
+
+      println("FN >>> " + fqFn)
+
+      val df = instance.parse(fqFn)(new FakeSpark) // Wiring.spark
+
+      println("" + df.count() + " of " + fqFn + " processed.")
+
     }
 
   }
