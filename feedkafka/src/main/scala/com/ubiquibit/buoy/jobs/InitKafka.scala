@@ -60,7 +60,7 @@ class InitKafkaImpl(env: {
           (record._1, first._1)
         }
 
-    randomElemOf(candidates).foreach(t => {
+    randomElemOf(candidates).foreach(t => { // there's really only one
 
       val stationId = t._1
       val buoyData = t._2
@@ -72,6 +72,7 @@ class InitKafkaImpl(env: {
       val parser = new TextParser
       val df = parser.parse(file.get.getAbsolutePath)
       val cnt = df.count()
+
       println(s"Processed $cnt lines of $stationId's $buoyData feed.")
 
       repo.updateImportStatus(stationId, buoyData, DONE)

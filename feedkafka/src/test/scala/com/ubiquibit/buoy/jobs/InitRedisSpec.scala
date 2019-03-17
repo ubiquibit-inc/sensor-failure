@@ -24,15 +24,7 @@ class InitRedisSpec
   after {
 
     fakeRepo.reset
-
-    fakeFilez.fakeStationInfo = Seq()
-    fakeFilez.fakeStationIds = Seq()
-    fakeFilez.fakeFeeds = Map()
-
-    fakeFilez.stationInfoCount = 0
-    fakeFilez.stationIdCount = 0
-    fakeFilez.pairCount = 0
-    fakeFilez.feedCount = 0
+    fakeFilez.reset
 
   }
 

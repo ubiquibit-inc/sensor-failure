@@ -6,34 +6,31 @@ import org.scalatest.{BeforeAndAfter, FunSpec}
 
 import scala.util.Random
 
-class ProducersSpec
-//  extends FunSpec with BeforeAndAfter
-{
+class ProducersSpec extends FunSpec with BeforeAndAfter {
 
   private val testCallback = new TestCallback
   private val testRecord = TextRecord(TimeHelper.epochTimeZeroTimestamp(), rF(), rF(), rF(), rF(), rF(), rF(), rF(), rF(), rF(), rF(), rF(), rF(), rF(), rF())
 
   implicit def stationRepository = new FakeStationRepository
 
-  val instance: Producer[WxRecord] = Producers.of(StationId.makeStationId("test"), Text)(stationRepository)
-
   def rF(): Float = {
     Random.nextFloat()
   }
 
-  /*
   after {
     testCallback.calledBack = false
   }
 
   ignore("Producers should") {
+
+    val instance: Producer[WxRecord] = Producers.of(StationId.makeStationId("test"), Text)(stationRepository)
+
     it("give me a Producer that can send a message to the test topic") {
       instance.send(testRecord, testCallback)
       Thread.sleep(32)
       assert(testCallback.calledBack)
     }
   }
-  */
 
   class TestCallback extends Callback {
     var calledBack = false
@@ -43,7 +40,7 @@ class ProducersSpec
         println("Error on callback")
         e.printStackTrace()
       }
-      else calledBack = true
+      calledBack = true
     }
   }
 

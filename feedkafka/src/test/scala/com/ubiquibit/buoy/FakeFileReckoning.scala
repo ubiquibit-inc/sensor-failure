@@ -7,6 +7,18 @@ import com.ubiquibit.buoy.StationId.makeStationId
 
 class FakeFileReckoning extends FileReckoning {
 
+  def reset: Unit = {
+    fakeStationInfo = Seq()
+    fakeStationIds = Seq()
+    fakeFeeds = Map()
+
+    stationInfoCount = 0
+    stationIdCount = 0
+    pairCount = 0
+    feedCount = 0
+
+  }
+
   var stationIdCount = 0
   var fakeStationIds: Seq[StationId] = Seq()
 
