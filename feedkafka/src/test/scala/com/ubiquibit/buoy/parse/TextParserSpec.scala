@@ -97,7 +97,9 @@ class TextParserSpec extends SparkSpec with BeforeAndAfter {
 
       val df = instance.parseFile(problemFile)
 
-      println("" + df.count() + " of " + pFile + " processed.")
+      val cnt = df.count()
+
+      assert(cnt === 10968)
 
     }
 
