@@ -2,9 +2,11 @@ package com.ubiquibit
 
 import com.ubiquibit.buoy._
 import org.apache.kafka.clients.producer.{Callback, RecordMetadata}
-import org.scalatest.{BeforeAndAfter, FunSpec}
+import org.scalatest.{BeforeAndAfter, FunSpec, Tag}
 
 import scala.util.Random
+
+object FlakyFileTest extends Tag("FlakyFileTest")
 
 class ProducersSpec extends FunSpec with BeforeAndAfter {
 
@@ -26,7 +28,7 @@ class ProducersSpec extends FunSpec with BeforeAndAfter {
 
     val instance: Producer[WxRecord] = Producers.of(StationId.makeStationId("test"), Text)(stationRepository)
 
-    it("give me a Producer that can send a message to the test topic") {
+    it("give me a Producer that can send a message to the test topic", FlakyFileTest) {
       instance.send(testRecord, testCallback)
       Thread.sleep(32)
       assert(testCallback.calledBack)
