@@ -2,7 +2,14 @@ package com.ubiquibit.buoy
 
 import java.sql.Timestamp
 
-sealed abstract class WxRecord(eventTime: Timestamp) extends Serializable
+import com.ubiquibit.buoy.serialize.{DefSer}
+
+
+sealed abstract class WxRecord(eventTime: Timestamp) extends Serializable {
+
+  def valueOf(): Array[Byte] = DefSer.serialize(this)
+
+}
 
 case class TextRecord(eventTime: Timestamp, windDirection: Float, windSpeed: Float, gustSpeed: Float
                       , waveHeight: Float, dominantWavePeriod: Float, averageWavePeriod: Float, mWaveDirection: Float, seaLevelPressure: Float

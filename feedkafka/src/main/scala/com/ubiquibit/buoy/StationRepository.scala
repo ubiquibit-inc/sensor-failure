@@ -1,9 +1,9 @@
 package com.ubiquibit.buoy
 
-import com.redis.RedisClient
-import com.ubiquibit.{Redis, TimeHelper}
+import java.util.logging.Logger
 
-import scala.collection.Map
+import com.redis.RedisClient
+import com.ubiquibit.Redis
 
 /**
   * Weather station repository...
@@ -39,6 +39,8 @@ class StationRepositoryImpl(env: {
   val redis: Redis
 }) extends StationRepository {
 
+  val log = Logger.getLogger(getClass.getName)
+
   private val redis: RedisClient = env.redis.client
 
   // this is hacky, but I don't like the current serialization libraries for redis
@@ -55,11 +57,11 @@ class StationRepositoryImpl(env: {
       case ERROR | WORKING | DONE =>
         if (redis.hmset(StationRepository.redisKey(stationId), Seq(buoyData.toString -> importStatus.toString))) Some(importStatus)
         else {
-          println(s"Error updating stationId $stationId to $importStatus.")
+          log.severe(s"Error updating stationId $stationId to $importStatus.")
           Some(ERROR)
         }
       case _ => {
-        println(s"Unsupported import status: $importStatus")
+        log.severe(s"Unsupported import status: $importStatus")
         None
       }
     }
@@ -104,8 +106,8 @@ class StationRepositoryImpl(env: {
       }
     ).sum
     val failures = total - deleted
-    println(s"(Redis) DELETE >> Deleted $deleted of $total stations.")
-    if (failures > 0) println(s"(Redis) DELETE >> $failures errors occurred.")
+    log.info(s"(Redis) DELETE >> Deleted $deleted of $total stations.")
+    if (failures > 0) log.severe(s"(Redis) DELETE >> $failures errors occurred.")
     deleted > 0
   }
 

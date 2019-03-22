@@ -79,7 +79,7 @@ class TextParserSpec extends FunSpec with BeforeAndAfter {
 
       println("FN >>> " + fqFn)
 
-      val df = instance.parse(fqFn)(new FakeSpark) // Wiring.spark
+      val df = instance.parse(fqFn)(new FakeSpark().session) // Wiring.spark
 
       println("" + df.count() + " of " + fqFn + " processed.")
 

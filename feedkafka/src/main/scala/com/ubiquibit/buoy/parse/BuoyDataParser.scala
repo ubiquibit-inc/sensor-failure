@@ -2,12 +2,10 @@ package com.ubiquibit.buoy.parse
 
 import java.sql.Timestamp
 
-import com.ubiquibit.Spark
-import com.ubiquibit.buoy.{BuoyData, TextRecord}
-import org.apache.spark.sql.{DataFrame, Row}
+import com.ubiquibit.buoy.TextRecord
+import org.apache.spark.sql.{DataFrame, Row, SparkSession}
 
 import scala.annotation.tailrec
-import scala.util.Try
 
 
 /**
@@ -20,7 +18,7 @@ sealed abstract class BuoyDataParser {
     * @param spark      a spark session container
     * @return a fully-processed DataFrame
     */
-  def parse(fqFileName: String)(implicit spark: Spark): DataFrame
+  def parse(fqFileName: String)(implicit spark: SparkSession): DataFrame
 
   /**
     * Processes a single line from input
@@ -59,9 +57,9 @@ object Parsers {
 
 class TextParser extends BuoyDataParser with java.io.Serializable {
 
-  override def parse(fqFileName: String)(implicit spark: Spark): DataFrame = {
+  override def parse(fqFileName: String)(implicit spark: SparkSession): DataFrame = {
 
-    val lines = spark.sc.textFile(fqFileName)
+    val lines = spark.sparkContext.textFile(fqFileName)
 
     val rows =
       lines
@@ -77,7 +75,7 @@ class TextParser extends BuoyDataParser with java.io.Serializable {
       .schemaFor[TextRecord]
       .dataType.asInstanceOf[StructType]
 
-    spark.spark.sqlContext.createDataFrame(rows, schema)
+    spark.sqlContext.createDataFrame(rows, schema)
 
   }
 

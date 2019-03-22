@@ -1,8 +1,13 @@
 package com.ubiquibit.buoy.jobs
 
+import java.util.logging.Logger
+
+import com.typesafe.config.{Config, ConfigFactory}
 import com.ubiquibit.buoy._
-import com.ubiquibit.{Spark, TimeHelper}
 import com.ubiquibit.buoy.parse.TextParser
+import com.ubiquibit.buoy.serialize.DefSer
+import com.ubiquibit.{Spark, TopicNamer, Wiring}
+import org.apache.spark.sql.SparkSession
 
 /**
   * This util is for bootstrapping the system, and comes after Redis
@@ -25,13 +30,20 @@ class InitKafkaImpl(env: {
   val stationRepository: StationRepository
   val spark: Spark
   val fileReckoning: FileReckoning
-}) extends InitKafka with Serializable {
+}) extends InitKafka with Serializable with TopicNamer {
 
   private val repo: StationRepository = env.stationRepository
   private val filez: FileReckoning = env.fileReckoning
   private val rand = scala.util.Random
+  private val conf: Config = ConfigFactory.load()
 
-  implicit val spark: Spark = env.spark
+  implicit val spark: SparkSession = env.spark.session
+
+  val log = Logger.getLogger(getClass.getName)
+
+  //    makeSession(
+  //    ("xyz", "pdq") :: Nil
+  //  )
 
   def hasFeedReady(si: StationInfo): Boolean = {
     si.feeds.exists(_._2 == READY)
@@ -44,12 +56,6 @@ class InitKafkaImpl(env: {
 
   def run(): Unit = {
 
-    TimeHelper.randomNap()
-
-    // ^^^ so that everybody doesn't grab the same file
-    // this is by no means a guarantee, but is good enough
-    // for now
-
     val candidates: Seq[(StationId, BuoyData)] =
       repo
         .readStations()
@@ -60,24 +66,57 @@ class InitKafkaImpl(env: {
           (record._1, first._1)
         }
 
-    randomElemOf(candidates).foreach(t => { // there's really only one
+    log.info(s"Found ${candidates.size} candidate stations.")
+
+    randomElemOf(candidates).foreach(t => { // there's really (at most?) one
 
       val stationId = t._1
       val buoyData = t._2
+      log.fine(s"Proceeding with $stationId's $buoyData file.")
 
       repo.updateImportStatus(stationId, buoyData, WORKING)
 
-      println(s"Processing $stationId's $buoyData feed.")
+      import spark.implicits._
+
+      log.info(s"Processing $stationId's $buoyData feed.")
       val file = filez.getFile(stationId, buoyData)
       val parser = new TextParser
-      val df = parser.parse(file.get.getAbsolutePath)
+      val ds = parser
+        .parse(file.get.getAbsolutePath)
+        .as[TextRecord]
+
+      val topic: String = topicName(stationId, buoyData)
+      log.info(s"Will attempt to sink to Kafka topic = $topic.")
+
+      def toValue(tr: TextRecord): Array[Byte] = {
+        DefSer.serialize(tr)
+      }
+
+
+      val df = ds.map(_.valueOf())
+      df.write
+        .format("kafka")
+        .option("kafka.bootstrap.servers", conf.getString("bootstrap.servers"))
+        .option("topic", topic)
+        .save()
+
       val cnt = df.count()
 
-      println(s"Processed $cnt lines of $stationId's $buoyData feed.")
+      val someDF = Seq(("1", "jason"), ("2", "shelley")).toDF("key", "value")
+
+      log.info(s"Processed $cnt lines of $stationId's $buoyData feed.")
 
       repo.updateImportStatus(stationId, buoyData, DONE)
     })
 
+  }
+
+}
+
+object InitKafkaImpl {
+
+  def main(args: Array[String]): Unit = {
+    Wiring.initKafka.run()
   }
 
 }

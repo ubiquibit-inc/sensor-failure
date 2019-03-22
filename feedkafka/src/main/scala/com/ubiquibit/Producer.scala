@@ -22,13 +22,15 @@ trait Producer[WxRec <: WxRecord] {
 
 }
 
-class KafkaProducerImpl(stationId: StationId,
-                        buoyData: BuoyData,
-                        callback: Callback) extends Producer[WxRecord] {
-
-  private val topicName: String = {
+trait TopicNamer {
+  def topicName(stationId: StationId, buoyData: BuoyData): String = {
     stationId.toString + "-" + buoyData.ext.toUpperCase
   }
+}
+
+class KafkaProducerImpl(stationId: StationId,
+                        buoyData: BuoyData,
+                        callback: Callback) extends Producer[WxRecord] with TopicNamer {
 
   val conf: Config = ConfigFactory.load()
 
@@ -48,7 +50,7 @@ class KafkaProducerImpl(stationId: StationId,
   val producer = new KafkaProducer[String, WxRecord](kafkaProps)
 
   override def send(value: WxRecord, callback: Callback = callback): Unit = {
-    val record = new ProducerRecord[String, WxRecord](topicName, value)
+    val record = new ProducerRecord[String, WxRecord](topicName(stationId, buoyData), value)
     producer.send(record, callback)
   }
 }

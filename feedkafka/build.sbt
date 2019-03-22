@@ -1,6 +1,6 @@
 // The simplest possible sbt build file is just one line:
 
-scalaVersion := "2.12.8"
+scalaVersion := "2.11.12"
 // That is, to create a valid sbt build, all you've got to do is define the
 // version of Scala you'd like your project to use.
 
@@ -27,14 +27,17 @@ version := "1.0"
 libraryDependencies += "org.typelevel" %% "cats-core" % "1.4.0" withSources() withJavadoc()
 libraryDependencies += "com.typesafe" % "config" % "1.3.2" withSources() withJavadoc()
 
-libraryDependencies += "net.debasishg" %% "redisclient" % "3.9" withSources() withJavadoc()
+libraryDependencies += "net.debasishg" %% "redisclient" % "3.9" % Provided withSources() withJavadoc()
+libraryDependencies += "org.apache.spark" %% "spark-sql" % "2.4.0" % Provided withSources() withJavadoc()
 
-libraryDependencies += "org.apache.spark" %% "spark-sql" % "2.4.0" withSources() withJavadoc()
-
-libraryDependencies += "org.apache.kafka" %% "kafka" % "2.1.1" withSources() withJavadoc()
-
+libraryDependencies += "org.apache.spark" %% "spark-sql-kafka-0-10" % "2.4.0" withSources() withJavadoc()
 libraryDependencies += "org.scalatest" %% "scalatest" % "3.2.0-SNAP10" % Test withSources() withJavadoc()
 libraryDependencies += "org.scalacheck" %% "scalacheck" % "1.14.0" % Test withSources() withJavadoc()
+
+assemblyMergeStrategy in assembly := {
+  case PathList("META-INF", xs @ _*) => MergeStrategy.discard
+  case x => MergeStrategy.first
+}
 
 // Here, `libraryDependencies` is a set of dependencies, and by using `+=`,
 // we're adding the cats dependency to the set of dependencies that sbt will go

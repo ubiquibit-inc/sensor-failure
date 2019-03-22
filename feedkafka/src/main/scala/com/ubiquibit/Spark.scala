@@ -9,7 +9,9 @@ import org.apache.spark.sql.SparkSession
   */
 trait Spark {
 
-  def spark: SparkSession
+  def session: SparkSession
+
+  def makeSession(config: Seq[(String, String)]): SparkSession
 
   def sc: SparkContext
 
@@ -19,12 +21,37 @@ class SparkImpl extends Spark {
 
   val conf: Config = ConfigFactory.load()
 
-  val spark: SparkSession = SparkSession.builder()
-    .appName("InitKafkaSpec")
-    .master(conf.getString("spark.master"))
-    .config("spark.sql.shuffle.partitions", conf.getString("spark.partitions"))
-    .getOrCreate()
+  private val defaultConfigs: Seq[(String, String)] = Seq(
+    ("spark.sql.shuffle.partitions", conf.getString("spark.partitions"))
+  )
 
-  val sc: SparkContext = spark.sparkContext
+  private def buildIt(bldr: SparkSession.Builder, s: Seq[(String, String)]): SparkSession.Builder = {
+    var bld = bldr
+    for (cnf <- s) {
+      bld = bldr.config(cnf._1, cnf._2)
+    }
+    bld
+  }
+
+  private val defaultBuilder: SparkSession.Builder = {
+    val b = SparkSession.builder()
+      .appName("InitKafkaSpec")
+      .master(conf.getString("spark.master"))
+    buildIt(b, defaultConfigs)
+  }
+
+  val session: SparkSession = {
+    defaultBuilder.getOrCreate()
+  }
+
+  val sc: SparkContext = session.sparkContext
+
+  override def makeSession(config: Seq[(String, String)]): SparkSession = {
+    var b: SparkSession.Builder = defaultBuilder
+    for( cnf <- config ){
+      b = b.config(cnf._1, cnf._2)
+    }
+    b.getOrCreate()
+  }
 
 }
