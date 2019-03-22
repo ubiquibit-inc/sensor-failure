@@ -84,7 +84,6 @@ class InitKafkaImpl(env: {
       val ds = parser
         .parseFile(file.get.getAbsolutePath)
         .as[TextRecord]
-        .orderBy($"eventTime".asc)
 
       val topic: String = topicName(stationId, buoyData)
       log.info(s"Will attempt to sink to Kafka topic = $topic.")
