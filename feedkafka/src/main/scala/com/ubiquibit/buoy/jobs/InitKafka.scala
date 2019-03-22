@@ -82,16 +82,12 @@ class InitKafkaImpl(env: {
       val file = filez.getFile(stationId, buoyData)
       val parser = new TextParser
       val ds = parser
-        .parse(file.get.getAbsolutePath)
+        .parseFile(file.get.getAbsolutePath)
         .as[TextRecord]
+        .orderBy($"eventTime".asc)
 
       val topic: String = topicName(stationId, buoyData)
       log.info(s"Will attempt to sink to Kafka topic = $topic.")
-
-      def toValue(tr: TextRecord): Array[Byte] = {
-        DefSer.serialize(tr)
-      }
-
 
       val df = ds.map(_.valueOf())
       df.write

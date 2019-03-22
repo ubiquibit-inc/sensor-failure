@@ -95,7 +95,7 @@ class TextParserSpec extends SparkSpec with BeforeAndAfter {
 
       import spark.implicits._
 
-      val df = instance.parse(problemFile)
+      val df = instance.parseFile(problemFile)
 
       println("" + df.count() + " of " + pFile + " processed.")
 
@@ -110,13 +110,33 @@ class TextParserSpec extends SparkSpec with BeforeAndAfter {
       import spark.implicits._
 
       val ds = instance
-        .parse(file)
+        .parseFile(file)
         .as[TextRecord]
 
       val firstThree = ds.take(3)
-      assert(firstThree(0).lineLength === 74)
-      assert(firstThree(1).lineLength === 75)
-      assert(firstThree(2).lineLength === 75)
+      assert(firstThree(0).lineLength === 77)
+      assert(firstThree(1).lineLength === 76)
+      assert(firstThree(2).lineLength === 76)
+
+    }
+
+    it("sorts records chronologically (earliest at the top)", SparkTest) {
+
+      val file: String = problemFile
+
+      implicit val spark: SparkSession = ss
+
+      import spark.implicits._
+
+      val ds = instance
+        .parseFile(file)
+        .as[TextRecord]
+
+      val some = ds.take(16).toList
+
+      for ((List(first, second)) <- some.sliding(2)) {
+        assert(first.eventTime.before(second.eventTime))
+      }
 
     }
 

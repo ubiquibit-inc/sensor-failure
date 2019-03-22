@@ -16,9 +16,9 @@ sealed abstract class BuoyDataParser {
   /**
     * @param fqFileName a pointer to a
     * @param spark      a spark session container
-    * @return a fully-processed DataFrame
+    * @return a fully-processed DataFrame, in ascending eventTime order (earliest to latest)
     */
-  def parse(fqFileName: String)(implicit spark: SparkSession): DataFrame
+  def parseFile(fqFileName: String)(implicit spark: SparkSession): DataFrame
 
   /**
     * Processes a single line from input
@@ -57,7 +57,7 @@ object Parsers {
 
 class TextParser extends BuoyDataParser with java.io.Serializable {
 
-  override def parse(fqFileName: String)(implicit spark: SparkSession): DataFrame = {
+  override def parseFile(fqFileName: String)(implicit spark: SparkSession): DataFrame = {
 
     val lines = spark.sparkContext.textFile(fqFileName)
 
@@ -75,7 +75,10 @@ class TextParser extends BuoyDataParser with java.io.Serializable {
       .schemaFor[TextRecord]
       .dataType.asInstanceOf[StructType]
 
+    import org.apache.spark.sql.functions._
+
     spark.sqlContext.createDataFrame(rows, schema)
+      .orderBy(asc("eventTime"))
 
   }
 
