@@ -80,9 +80,11 @@ class TextParser extends BuoyDataParser with java.io.Serializable {
   }
 
   override def processLine(line: String): Row = {
+    val len = line.length
     val l = line.split(" ")
     val date = new Timestamp(l(0).toInt - 1900, l(1).toInt - 1, l(2).toInt, l(3).toInt, l(4).toInt, 0, 0)
     Row.fromSeq(Seq(date,
+      len,
       l(5).toFloat,
       l(6).toFloat,
       l(7).toFloat,

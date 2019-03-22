@@ -4,10 +4,11 @@ import java.io.{File, PrintWriter}
 import java.nio.file.{Files, Path}
 
 import com.ubiquibit._
-import org.apache.spark.sql.Row
-import org.scalatest.{BeforeAndAfter, FunSpec}
+import com.ubiquibit.buoy.TextRecord
+import org.apache.spark.sql.{Row, SparkSession}
+import org.scalatest.BeforeAndAfter
 
-class TextParserSpec extends FunSpec with BeforeAndAfter {
+class TextParserSpec extends SparkSpec with BeforeAndAfter {
 
   val instance = new TextParser
 
@@ -32,7 +33,7 @@ class TextParserSpec extends FunSpec with BeforeAndAfter {
     file = new File(path.toString)
     val pw = new PrintWriter(file)
     pw.write(exampleTextData)
-    pw.close
+    pw.close()
   }
 
   describe("TextParser should") {
@@ -46,42 +47,76 @@ class TextParserSpec extends FunSpec with BeforeAndAfter {
       assert(TimeHelper.getMonth(t) === 2)
       assert(TimeHelper.getDayOfMonth(t) === 9)
 
+      val len = row.getInt(1)
+      assert(len == 78)
+
       def f(idx: Int): Float = {
         val n = row.getFloat(idx)
         if (n.equals(Float.NaN)) n
         else BigDecimal(n).setScale(2, BigDecimal.RoundingMode.HALF_UP).toFloat
       }
 
+
       assert(f(2).isNaN)
+      assert(f(3).isNaN)
       assert(f(3).isNaN)
       assert(f(4).isNaN)
       assert(f(5).isNaN)
       assert(f(6).isNaN)
       assert(f(7).isNaN)
+      assert(f(8).isNaN)
 
-      assert(Math.abs(f(8) - 1021.2) < epsilon)
-      assert(Math.abs(f(9) - 15.5) < epsilon)
-      assert(Math.abs(f(10) - 11.7) < epsilon)
+      assert(Math.abs(f(9) - 1021.2) < epsilon)
+      assert(Math.abs(f(10) - 15.5) < epsilon)
+      assert(Math.abs(f(11) - 11.7) < epsilon)
 
-      assert(f(11).isNaN)
       assert(f(12).isNaN)
+      assert(f(13).isNaN)
 
-      assert(Math.abs(f(13) + 1.3) < epsilon)
-      assert(f(14).isNaN)
+      assert(Math.abs(f(14) + 1.3) < epsilon)
+      assert(f(15).isNaN)
     }
 
-    ignore("parses a problem file...") { // turned off for speediness
-
-
+    def problemFile = {
       val filename = "BDRN4.txt"
       val ddir = "/Users/jason/scratch/sensor-failure/data/www.ndbc.noaa.gov/data/realtime2"
       val fqFn = s"$ddir/$filename"
 
       println("FN >>> " + fqFn)
+      fqFn
+    }
 
-      val df = instance.parse(fqFn)(new FakeSpark().session) // Wiring.spark
+    it("parses a problem file...", SparkTest) { // turned off for speediness
 
-      println("" + df.count() + " of " + fqFn + " processed.")
+
+      val pFile: String = problemFile
+
+      implicit val spark: SparkSession = ss
+
+      import spark.implicits._
+
+      val df = instance.parse(problemFile)
+
+      println("" + df.count() + " of " + pFile + " processed.")
+
+    }
+
+    it("records line width", SparkTest) {
+
+      val file: String = problemFile
+
+      implicit val spark: SparkSession = ss
+
+      import spark.implicits._
+
+      val ds = instance
+        .parse(file)
+        .as[TextRecord]
+
+      val firstThree = ds.take(3)
+      assert(firstThree(0).lineLength === 74)
+      assert(firstThree(1).lineLength === 75)
+      assert(firstThree(2).lineLength === 75)
 
     }
 

@@ -35,7 +35,6 @@ class SparkImpl extends Spark {
 
   private val defaultBuilder: SparkSession.Builder = {
     val b = SparkSession.builder()
-      .appName("InitKafkaSpec")
       .master(conf.getString("spark.master"))
     buildIt(b, defaultConfigs)
   }
