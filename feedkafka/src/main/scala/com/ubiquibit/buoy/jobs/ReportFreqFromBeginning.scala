@@ -52,13 +52,7 @@ class ReportFreqFromBeginning(env: {
       DefSer.deserialize(row.getAs[Array[Byte]]("value")).asInstanceOf[TextRecord]
     }
 
-//    records.printSchema
-
-    val recDs = records.as[TextRecord]
-
-//    recDs.printSchema
-
-    val debugOut = recDs.writeStream
+    val debugOut = records.writeStream
       .format("console")
       .option("truncate", "false")
       .start()
