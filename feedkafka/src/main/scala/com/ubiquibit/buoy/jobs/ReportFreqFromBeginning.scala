@@ -52,19 +52,18 @@ class ReportFreqFromBeginning(env: {
       .option("startingOffsets", "earliest")
       .load()
 
-    val valueOnly = ds
-      .selectExpr("value AS value")
-      .select("value")
+    val records = ds
+        .selectExpr(s"deserialize(value) AS record")
 
-    val recordDF = valueOnly
-        .selectExpr(s"deserialize(value) AS `$stationId $feedType record`")
+    val prettyPrint = records
+      .withColumnRenamed("record", s"`$stationId $feedType record`")
 
-    val cout = recordDF.writeStream
+    val debugOut = prettyPrint.writeStream
       .format("console")
       .option("truncate", "false")
       .start()
 
-    cout.awaitTermination()
+    debugOut.awaitTermination()
 
     //    }
     //    else log.info("No stations active at this time.")
