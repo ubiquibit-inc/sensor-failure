@@ -6,7 +6,7 @@ import com.typesafe.config.{Config, ConfigFactory}
 import com.ubiquibit.buoy._
 import com.ubiquibit.buoy.parse.TextParser
 import com.ubiquibit.buoy.serialize.DefSer
-import com.ubiquibit.{Spark, TopicNamer, Wiring}
+import com.ubiquibit.{RandomElements, Spark, TopicNamer, Wiring}
 import org.apache.spark.sql.SparkSession
 
 /**
@@ -30,28 +30,18 @@ class InitKafkaImpl(env: {
   val stationRepository: StationRepository
   val spark: Spark
   val fileReckoning: FileReckoning
-}) extends InitKafka with Serializable with TopicNamer {
+}) extends InitKafka with TopicNamer with RandomElements with Serializable {
+
+  private val log: Logger = Logger.getLogger(getClass.getName)
 
   private val repo: StationRepository = env.stationRepository
   private val filez: FileReckoning = env.fileReckoning
-  private val rand = scala.util.Random
   private val conf: Config = ConfigFactory.load()
 
   implicit val spark: SparkSession = env.spark.session
 
-  val log = Logger.getLogger(getClass.getName)
-
-  //    makeSession(
-  //    ("xyz", "pdq") :: Nil
-  //  )
-
   def hasFeedReady(si: StationInfo): Boolean = {
     si.feeds.exists(_._2 == READY)
-  }
-
-  def randomElemOf[T](seq: Seq[T]): Option[T] = {
-    if (seq.isEmpty) None
-    else seq lift rand.nextInt(seq.length)
   }
 
   def run(): Unit = {
@@ -102,6 +92,7 @@ class InitKafkaImpl(env: {
       log.info(s"Processed $cnt lines of $stationId's $buoyData feed.")
 
       repo.updateImportStatus(stationId, buoyData, DONE)
+
     })
 
   }

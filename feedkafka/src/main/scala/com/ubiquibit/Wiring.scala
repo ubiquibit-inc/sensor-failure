@@ -1,7 +1,7 @@
 package com.ubiquibit
 
-import com.ubiquibit.buoy.jobs.{InitKafka, InitKafkaImpl, InitRedis, InitRedisImpl}
-import com.ubiquibit.buoy.{FileReckoning, FileReckoningImpl, StationRepositoryImpl, StationRepository}
+import com.ubiquibit.buoy.jobs._
+import com.ubiquibit.buoy.{FileReckoning, FileReckoningImpl, StationRepository, StationRepositoryImpl}
 
 /**
   * As described here: http://jonasboner.com/real-world-scala-dependency-injection-di/
@@ -17,5 +17,6 @@ object Wiring {
 
   lazy val initKafka: InitKafka = new InitKafkaImpl(this)
   lazy val initRedis: InitRedis = new InitRedisImpl(this)
+  lazy val reportFreqFromBeginning: ReportFreqFromBeginning = new ReportFreqFromBeginning(this)
 
 }
