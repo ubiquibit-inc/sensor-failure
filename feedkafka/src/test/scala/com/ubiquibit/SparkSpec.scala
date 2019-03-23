@@ -5,7 +5,7 @@ import org.apache.spark.{SparkConf, SparkContext}
 import org.apache.spark.sql.{SQLContext, SparkSession}
 import org.scalatest.{FunSpec, Tag}
 
-class SparkSpec extends FunSpec{
+abstract class SparkSpec extends FunSpec{
 
   private val conf: Config = ConfigFactory.load()
   private val master = conf.getString("spark.master")

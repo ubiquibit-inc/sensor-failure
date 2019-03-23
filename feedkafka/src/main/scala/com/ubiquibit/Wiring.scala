@@ -9,6 +9,10 @@ import com.ubiquibit.buoy.{FileReckoning, FileReckoningImpl, StationRepository, 
   */
 object Wiring {
 
+  private val hahaScala: Unit = {
+    spark.sc.setLogLevel("ERROR")
+  }
+
   lazy val redis: Redis = new RedisImpl
   lazy val spark: Spark = new SparkImpl
 

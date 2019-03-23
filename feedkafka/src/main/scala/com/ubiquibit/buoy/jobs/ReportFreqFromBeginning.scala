@@ -7,7 +7,8 @@ import com.ubiquibit.{RandomElements, Spark, TopicNamer, Wiring}
 import com.ubiquibit.buoy._
 import com.ubiquibit.buoy.serialize.DefSer
 import org.apache.spark.SparkContext
-import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.{DataFrame, Encoder, Encoders, SparkSession}
+import org.apache.spark.sql.types.{BinaryType, StructField, StructType}
 
 class ReportFreqFromBeginning(env: {
   val stationRepository: StationRepository
@@ -36,14 +37,7 @@ class ReportFreqFromBeginning(env: {
     val topic: String = topicName(stationId, feedType)
 
     import ss.implicits._
-
-    def deser(b: Array[Byte]): TextRecord = {
-      DefSer.deserialize(b).asInstanceOf[TextRecord]
-    }
-
     import org.apache.spark.sql.functions._
-
-    ss.udf.register("deserialize", (arr: Array[Byte]) => DefSer.deserialize[TextRecord](arr))
 
     val ds = ss.readStream
       .format("kafka")
@@ -51,20 +45,33 @@ class ReportFreqFromBeginning(env: {
       .option("subscribe", topic)
       .option("startingOffsets", "earliest")
       .load()
+//    ds.printSchema
 
-    val textRecords = ds
-      .selectExpr("""deserialize(value) AS tr""")
-      .select($"tr")
-      .map(tr => tr.toString)
+    val valueOnly = ds
+      .selectExpr("value AS value")
+      .select("value")
+//    valueOnly.printSchema
 
-    val consoleOut = textRecords.writeStream
+    // TODO pull out decoder/deserializer logic to allow loading by BuoyData feed type
+    val enc: Encoder[TextRecord] = Encoders.product[TextRecord]
+    ss.udf.register("deserialize", (bytes: Array[Byte]) => {
+      DefSer.deserialize(bytes).asInstanceOf[TextRecord] }
+    )
+
+    val recordDF = valueOnly
+        .selectExpr("""deserialize(value) AS record""")
+//    recordDF.printSchema
+
+    val cout = recordDF.writeStream
       .format("console")
+      .option("truncate", "false")
       .start()
 
-    consoleOut.awaitTermination()
+    cout.awaitTermination()
 
     //    }
     //    else log.info("No stations active at this time.")
+
   }
 
 }
