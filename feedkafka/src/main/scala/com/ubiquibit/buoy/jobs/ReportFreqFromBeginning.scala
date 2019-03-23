@@ -7,8 +7,7 @@ import com.ubiquibit.{RandomElements, Spark, TopicNamer, Wiring}
 import com.ubiquibit.buoy._
 import com.ubiquibit.buoy.serialize.DefSer
 import org.apache.spark.SparkContext
-import org.apache.spark.sql.{DataFrame, Encoder, Encoders, SparkSession}
-import org.apache.spark.sql.types.{BinaryType, StructField, StructType}
+import org.apache.spark.sql._
 
 class ReportFreqFromBeginning(env: {
   val stationRepository: StationRepository
@@ -35,15 +34,12 @@ class ReportFreqFromBeginning(env: {
     val feedType = Text // result.get._2.get._1
 
     val topic: String = topicName(stationId, feedType)
+    // TODO pull out decoder/deserializer logic to allow loading by BuoyData feed type
 
     import ss.implicits._
     import org.apache.spark.sql.functions._
 
-    // TODO pull out decoder/deserializer logic to allow loading by BuoyData feed type
     val enc: Encoder[TextRecord] = Encoders.product[TextRecord]
-    ss.udf.register("deserialize", (bytes: Array[Byte]) => {
-      DefSer.deserialize(bytes).asInstanceOf[TextRecord] }
-    )
 
     val ds = ss.readStream
       .format("kafka")
@@ -52,13 +48,17 @@ class ReportFreqFromBeginning(env: {
       .option("startingOffsets", "earliest")
       .load()
 
-    val records = ds
-        .selectExpr(s"deserialize(value) AS record")
+    val records = ds.map{row =>
+      DefSer.deserialize(row.getAs[Array[Byte]]("value")).asInstanceOf[TextRecord]
+    }
 
-    val prettyPrint = records
-      .withColumnRenamed("record", s"`$stationId $feedType record`")
+//    records.printSchema
 
-    val debugOut = prettyPrint.writeStream
+    val recDs = records.as[TextRecord]
+
+//    recDs.printSchema
+
+    val debugOut = recDs.writeStream
       .format("console")
       .option("truncate", "false")
       .start()

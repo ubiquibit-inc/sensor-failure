@@ -10,7 +10,7 @@ object Serializers {
 
 }
 
-object DefSer {
+object DefSer extends Serializable {
 
   import java.io._
 
