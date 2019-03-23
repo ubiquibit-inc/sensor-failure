@@ -39,28 +39,25 @@ class ReportFreqFromBeginning(env: {
     import ss.implicits._
     import org.apache.spark.sql.functions._
 
-    val ds = ss.readStream
-      .format("kafka")
-      .option("kafka.bootstrap.servers", conf.getString("bootstrap.servers"))
-      .option("subscribe", topic)
-      .option("startingOffsets", "earliest")
-      .load()
-//    ds.printSchema
-
-    val valueOnly = ds
-      .selectExpr("value AS value")
-      .select("value")
-//    valueOnly.printSchema
-
     // TODO pull out decoder/deserializer logic to allow loading by BuoyData feed type
     val enc: Encoder[TextRecord] = Encoders.product[TextRecord]
     ss.udf.register("deserialize", (bytes: Array[Byte]) => {
       DefSer.deserialize(bytes).asInstanceOf[TextRecord] }
     )
 
+    val ds = ss.readStream
+      .format("kafka")
+      .option("kafka.bootstrap.servers", conf.getString("bootstrap.servers"))
+      .option("subscribe", topic)
+      .option("startingOffsets", "earliest")
+      .load()
+
+    val valueOnly = ds
+      .selectExpr("value AS value")
+      .select("value")
+
     val recordDF = valueOnly
-        .selectExpr("""deserialize(value) AS record""")
-//    recordDF.printSchema
+        .selectExpr(s"deserialize(value) AS `$stationId $feedType record`")
 
     val cout = recordDF.writeStream
       .format("console")
