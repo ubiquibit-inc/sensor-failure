@@ -1,10 +1,18 @@
 package com.ubiquibit
 
 import java.sql.Timestamp
+import java.text.SimpleDateFormat
 import java.time.{LocalDateTime, ZoneOffset}
 import java.util.Calendar
 
 object TimeHelper {
+
+  val defaultFormat = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss")
+
+  def from(s: String): Timestamp = {
+    val date = defaultFormat.parse(s)
+    new Timestamp(date.getTime)
+  }
 
   /**
     * The source weather stations report in UTC, so we use it too.
