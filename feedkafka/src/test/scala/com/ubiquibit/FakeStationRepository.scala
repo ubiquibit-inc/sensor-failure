@@ -1,5 +1,7 @@
 package com.ubiquibit
 
+import java.sql.Timestamp
+
 import com.ubiquibit.buoy._
 
 class FakeStationRepository extends StationRepository {
@@ -9,6 +11,7 @@ class FakeStationRepository extends StationRepository {
     readStationsResponse = Seq()
     deleteCount = 0
     saveCount = 0
+    updateLastReportCount = 0
   }
 
   var readStationsResponse: Seq[StationInfo] = Seq()
@@ -40,4 +43,8 @@ class FakeStationRepository extends StationRepository {
     Some(stationInfo.stationId)
   }
 
+  var updateLastReportCount = 0
+  override def updateLastReport(stationId: StationId, time: Timestamp): Unit = {
+    updateLastReportCount = updateLastReportCount + 1
+  }
 }

@@ -1,14 +1,16 @@
 package com.ubiquibit.buoy
 
+import java.sql.Timestamp
 import java.util.logging.Logger
 
 import com.redis.RedisClient
-import com.ubiquibit.Redis
+import com.ubiquibit.{Redis, TimeHelper}
 
 /**
   * Weather station repository...
   */
 trait StationRepository extends Serializable {
+  def updateLastReport(stationId: StationId, time: Timestamp): Unit
 
   def readStations(): Seq[StationInfo]
 
@@ -24,7 +26,7 @@ trait StationRepository extends Serializable {
 
 }
 
-object StationRepository {
+object StationRepository extends Serializable{
 
   private[buoy] val stationKeyPattern = "stationId:"
 
@@ -117,4 +119,7 @@ class StationRepositoryImpl(env: {
     else None
   }
 
+  override def updateLastReport(stationId: StationId, time: Timestamp): Unit = {
+    redis.hmset(StationRepository.redisKey(stationId), Seq(lastReportField -> time.toString))
+  }
 }

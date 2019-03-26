@@ -1,6 +1,6 @@
 package com.ubiquibit
 
-trait RandomElements {
+trait RandomElements extends Serializable{
 
   private val rand = scala.util.Random
 
