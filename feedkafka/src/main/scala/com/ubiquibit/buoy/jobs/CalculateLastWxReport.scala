@@ -9,18 +9,16 @@ import org.apache.spark.SparkContext
 import org.apache.spark.sql._
 
 /**
-  * Reads up the static data files and computes the most recent [[WxStation]] report, then saves it in Redis.
+  * This fun littel job reads up the static data files and computes the most recent [[WxStation]] report. And no one even cares...
   *
   * @param env DI injected in [[Wiring]]
   */
-class UpdateLastWxReport(env: {
-  val stationRepository: StationRepository
-  val spark: Spark
+class CalculateLastWxReport(env: {
+    val spark: Spark
 }) extends RandomElements with TopicNamer with QueryNamer with Deserializer {
 
   @transient private val Log: Logger = Logger.getLogger(getClass.getName)
 
-  val repo: StationRepository = env.stationRepository
   val ss: SparkSession = env.spark.session
   val sc: SparkContext = env.spark.sc
 
@@ -28,10 +26,8 @@ class UpdateLastWxReport(env: {
 
   def run(): Unit = {
 
-      val stationId = StationId.makeStationId("62149") //result.get._1)
+      val stationId = StationId.makeStationId("62149")
       val feedType = Text
-//      val stationId = StationId.makeStationId(result.get._1)
-//      val feedType = result.get._2.get._1
 
       val topic: String = topicName(stationId, feedType)
 
@@ -62,20 +58,14 @@ class UpdateLastWxReport(env: {
 
       val ts = lastReport.eventTime
 
-      repo.updateLastReport(stationId, ts)
-
       Log.info(s"Last $feedType report received from $stationId at $ts}. (Redis updated.)")
       println(s"Last $feedType report received from $stationId at $ts}. (Redis updated.)")
-
-
-//    else Log.info("No stations active at this time.")
-
 
   }
 
 }
 
-object UpdateLastWxReport {
+object CalculateLastWxReport {
   def main(args: Array[String]): Unit = {
     Wiring.updateLastWxReport.run()
   }
