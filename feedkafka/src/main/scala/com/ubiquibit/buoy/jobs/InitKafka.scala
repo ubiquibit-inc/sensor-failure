@@ -5,7 +5,6 @@ import java.util.logging.Logger
 import com.typesafe.config.{Config, ConfigFactory}
 import com.ubiquibit.buoy._
 import com.ubiquibit.buoy.parse.TextParser
-import com.ubiquibit.buoy.serialize.DefSer
 import com.ubiquibit.{RandomElements, Spark, TopicNamer, Wiring}
 import org.apache.spark.sql.SparkSession
 
