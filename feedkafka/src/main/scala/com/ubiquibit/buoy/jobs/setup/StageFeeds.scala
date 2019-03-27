@@ -49,6 +49,8 @@ class StageFeeds(env: {
 
       Thread.sleep(snoozeMs)
 
+      repo.updateImportStatus(f._1, f._2, SPARKSTAGED)
+
     }
 
     writer.flush()
