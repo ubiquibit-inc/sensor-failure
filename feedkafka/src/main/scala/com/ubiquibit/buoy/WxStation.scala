@@ -9,13 +9,13 @@ import com.ubiquibit.TimeHelper.epochTimeZeroUTC
   * @param reportFrequencyMinutes calculated frequency of reported obx (not considering disruptions/failures)
   * @param lastReport             time of last receipt
   */
-case class StationInfo(stationId: StationId,
-                       reportFrequencyMinutes: Int,
-                       lastReport: String = epochTimeZeroUTC().toString,
-                       feeds: Map[BuoyData, ImportStatus] = Map.empty) {
+case class WxStation(stationId: StationId,
+                     reportFrequencyMinutes: Int,
+                     lastReport: String = epochTimeZeroUTC().toString,
+                     feeds: Map[BuoyData, ImportStatus] = Map.empty) {
 
   def toMap: Map[String, String] = {
-    Map(StationInfo.stationIdKey -> stationId.toString, StationInfo.reportFrequencyKey -> reportFrequencyMinutes.toString, StationInfo.lastReportKey -> lastReport) ++
+    Map(WxStation.stationIdKey -> stationId.toString, WxStation.reportFrequencyKey -> reportFrequencyMinutes.toString, WxStation.lastReportKey -> lastReport) ++
       feeds.map { case (k, v) => (k.toString, v.toString) }
   }
 
@@ -24,7 +24,7 @@ case class StationInfo(stationId: StationId,
   override def equals(obj: scala.Any): Boolean = true
 }
 
-object StationInfo extends SupportedFeeds {
+object WxStation extends SupportedFeeds {
 
   private[buoy] val stationIdKey: String = "stationId"
   private[buoy] val reportFrequencyKey: String = "reportFrequencyMinutes"
@@ -35,7 +35,7 @@ object StationInfo extends SupportedFeeds {
   private[buoy] val staticFields: List[String] = stationIdKey :: reportFrequencyKey :: lastReportKey :: Nil
   private[buoy] val fields: List[String] = staticFields ++ supportedFeeds // ++ allFeeds
 
-  def valueOf(map: Map[String, String]): Option[StationInfo] = {
+  def valueOf(map: Map[String, String]): Option[WxStation] = {
     val stationId = map get stationIdKey
     val reportFreq = map get reportFrequencyKey
     val lastRpt = map get lastReportKey
@@ -46,7 +46,7 @@ object StationInfo extends SupportedFeeds {
       var rpt = ""
       if (lastRpt.isEmpty) rpt = epochTimeZeroUTC().toString
       else rpt = lastRpt.get
-      Some(StationInfo(StationId.makeStationId(stationId.get), reportFreq.get.toInt, rpt, feeds))
+      Some(WxStation(StationId.makeStationId(stationId.get), reportFreq.get.toInt, rpt, feeds))
     }
     else None
   }

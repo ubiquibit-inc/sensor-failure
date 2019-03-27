@@ -16,6 +16,10 @@ name := "feedkafka"
 organization := "com.ubiquibit.sensorfailure"
 version := "1.0"
 
+resolvers ++= Seq(
+  Resolver.sonatypeRepo("releases"), Resolver.sonatypeRepo("snapshots")
+)
+
 // Note, it's not required for you to define these three settings. These are
 // mostly only necessary if you intend to publish your library's binaries on a
 // place like Sonatype or Bintray.
@@ -25,6 +29,7 @@ version := "1.0"
 
 libraryDependencies += "org.typelevel" %% "cats-core" % "1.4.0" withSources() withJavadoc()
 libraryDependencies += "com.typesafe" % "config" % "1.3.2" withSources() withJavadoc()
+//libraryDependencies += "com.chuusai" %% "shapeless" % "2.3.3" withSources() withJavadoc()
 
 libraryDependencies += "net.debasishg" %% "redisclient" % "3.9" % Provided withSources() withJavadoc()
 libraryDependencies += "org.apache.spark" %% "spark-sql" % "2.4.0" % Provided withSources() withJavadoc()

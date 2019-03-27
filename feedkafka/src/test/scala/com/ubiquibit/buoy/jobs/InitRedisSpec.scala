@@ -18,8 +18,8 @@ class InitRedisSpec
 
   val instance: InitRedis = new InitRedisImpl(this)
 
-  val si0 = StationInfo(StationId.makeStationId("abcd"), 23)
-  val si1 = StationInfo(StationId.makeStationId("xyzpdq"), 42)
+  val si0 = WxStation(StationId.makeStationId("abcd"), 23)
+  val si1 = WxStation(StationId.makeStationId("xyzpdq"), 42)
 
   after {
 
@@ -45,7 +45,7 @@ class InitRedisSpec
 
     it("initialize if # stations in redis is < # stations on disk") {
 
-      fakeRepo.readStationsResponse = Seq[StationInfo](si1)
+      fakeRepo.readStationsResponse = Seq[WxStation](si1)
       fakeFilez.fakeStationInfo = Seq(si0, si1)
 
       instance.run()

@@ -35,10 +35,10 @@ class FakeFileReckoning extends FileReckoning {
     fakeFeeds
   }
 
-  var fakeStationInfo: Seq[StationInfo] = Seq()
+  var fakeStationInfo: Seq[WxStation] = Seq()
   var stationInfoCount = 0
 
-  override def stationInfo(): Seq[StationInfo] = {
+  override def stationInfo(): Seq[WxStation] = {
     stationInfoCount = stationInfoCount + 1
     fakeStationInfo
   }

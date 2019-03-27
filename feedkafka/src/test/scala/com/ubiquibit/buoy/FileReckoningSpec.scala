@@ -21,7 +21,7 @@ class FileReckoningSpec extends FunSpec {
 
     override def getFile(stationId: StationId, ofType: BuoyData): Option[File] = Some(new FakeFile(stationId.toString))
 
-    override def stationInfo(): Seq[StationInfo] = ???
+    override def stationInfo(): Seq[WxStation] = ???
 
     override def pairs(): List[(StationId, BuoyData)] = ???
   }

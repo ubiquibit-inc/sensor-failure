@@ -12,8 +12,9 @@ import com.ubiquibit.Wiring
   */
 object BootstrapRedis {
 
-  def main(args: Array[String]) = {
+  def main(args: Array[String]): Unit = {
     Wiring.initRedis.run()
+//    Wiring.stageFeeds.run()
   }
 
 }

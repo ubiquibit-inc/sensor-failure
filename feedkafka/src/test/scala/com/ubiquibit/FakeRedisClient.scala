@@ -2,7 +2,7 @@ package com.ubiquibit
 
 import com.redis.RedisClient
 import com.redis.serialization.{Format, Parse}
-import com.ubiquibit.buoy.StationInfo
+import com.ubiquibit.buoy.WxStation
 
 class FakeRedisClient extends RedisClient {
 

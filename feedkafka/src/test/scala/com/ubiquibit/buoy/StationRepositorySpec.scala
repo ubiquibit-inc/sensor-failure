@@ -22,7 +22,7 @@ class StationRepositorySpec extends FunSpec with BeforeAndAfter {
   private val stationId0 = StationId.makeStationId("abcdefg")
   private val station0type0 = Ocean
   private val station0type1 = Adcp2
-  private val station0Info = StationInfo(stationId0, 0, feeds = Map[BuoyData, ImportStatus](station0type0 -> READY, station0type1 -> UNSUPPORTED))
+  private val station0Info = WxStation(stationId0, 0, feeds = Map[BuoyData, ImportStatus](station0type0 -> READY, station0type1 -> UNSUPPORTED))
 
   private val stationId1 = StationId.makeStationId("xyqpdq")
   private val station1type0 = Text
@@ -82,8 +82,8 @@ class StationRepositorySpec extends FunSpec with BeforeAndAfter {
 
     it("reads station info from redis") {
 
-      val s0 = StationInfo(stationId1, 0, TimeHelper.epochTimeZeroUTC().toString, Map(Adcp -> READY, Adcp2 -> ERROR))
-      val s1 = StationInfo(stationId0, 0, TimeHelper.epochTimeZeroUTC().toString, Map(Text -> DONE, Hkp -> READY))
+      val s0 = WxStation(stationId1, 0, TimeHelper.epochTimeZeroUTC().toString, Map(Adcp -> READY, Adcp2 -> ERROR))
+      val s1 = WxStation(stationId0, 0, TimeHelper.epochTimeZeroUTC().toString, Map(Text -> DONE, Hkp -> READY))
 
       fakeClient.fakeKeys = Some(List(Some(StationRepository.redisKey(stationId0)), Some(StationRepository.redisKey(stationId1))))
       fakeClient.fakeHmgetResult = s0.toMap //, s1.toMap)

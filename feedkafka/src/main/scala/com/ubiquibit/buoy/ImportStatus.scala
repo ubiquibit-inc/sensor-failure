@@ -14,9 +14,10 @@ object ImportStatus{
 }
 
 // bunnies & flowers
-case object READY extends ImportStatus("ready")
-case object WORKING extends ImportStatus("working")
-case object DONE extends ImportStatus("done")
+case object READY extends ImportStatus("ready") // downloaded to the load directory
+case object WORKING extends ImportStatus("working") // importing into Kafka
+case object DONE extends ImportStatus("done") // imported to kafka from load directory
+case object LIVE extends ImportStatus("realtime") // serving directly from NDBC
 
 // wolves & rain clouds
 case object ERROR extends ImportStatus("error")

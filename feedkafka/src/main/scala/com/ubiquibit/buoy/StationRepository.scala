@@ -12,9 +12,9 @@ import com.ubiquibit.{Redis, TimeHelper}
 trait StationRepository extends Serializable {
   def updateLastReport(stationId: StationId, time: Timestamp): Unit
 
-  def readStations(): Seq[StationInfo]
+  def readStations(): Seq[WxStation]
 
-  def readStation(stationId: StationId): Option[StationInfo]
+  def readStation(stationId: StationId): Option[WxStation]
 
   def getImportStatus(stationId: StationId, buoyData: BuoyData): Option[ImportStatus]
 
@@ -22,7 +22,7 @@ trait StationRepository extends Serializable {
 
   def deleteStations(): Boolean
 
-  def saveStation(stationInfo: StationInfo): Option[StationId]
+  def saveStation(stationInfo: WxStation): Option[StationId]
 
 }
 
@@ -41,7 +41,7 @@ class StationRepositoryImpl(env: {
   val redis: Redis
 }) extends StationRepository {
 
-  val log = Logger.getLogger(getClass.getName)
+  @transient private val Log = Logger.getLogger(getClass.getName)
 
   private val redis: RedisClient = env.redis.client
 
@@ -51,54 +51,54 @@ class StationRepositoryImpl(env: {
   private val lastReportField = "lastReportUTC"
   private val stationKeyPattern = StationRepository.stationKeyPattern
 
-
-  def updateImportStatus(stationId: StationId, buoyData: BuoyData, importStatus: ImportStatus): Option[ImportStatus] = {
+  override def updateImportStatus(stationId: StationId, buoyData: BuoyData, importStatus: ImportStatus): Option[ImportStatus] = {
     if (stationExists(stationId).isEmpty) return None
     require(BuoyData.values.contains(buoyData))
     importStatus match {
       case ERROR | WORKING | DONE =>
         if (redis.hmset(StationRepository.redisKey(stationId), Seq(buoyData.toString -> importStatus.toString))) Some(importStatus)
         else {
-          log.severe(s"Error updating stationId $stationId to $importStatus.")
+          Log.info(s"Error updating stationId $stationId to $importStatus.")
           Some(ERROR)
         }
       case _ => {
-        log.severe(s"Unsupported import status: $importStatus")
+        Log.info(s"Unsupported import status: $importStatus")
         None
       }
     }
   }
 
-  def getImportStatus(stationId: StationId, buoyData: BuoyData): Option[ImportStatus] = {
+  override def getImportStatus(stationId: StationId, buoyData: BuoyData): Option[ImportStatus] = {
     val bdType = buoyData.toString.toUpperCase
     redis.hmget(StationRepository.redisKey(stationId), bdType)
       .flatMap(_.get(bdType))
       .flatMap(ImportStatus.valueOf)
   }
 
-  def readStations(): Seq[StationInfo] = {
+  override def readStations(): Seq[WxStation] = {
     val keys = redis.keys(s"$stationKeyPattern*")
       .map { k => k.filter(_.isDefined).map(_.get) }
     if (keys.isEmpty) return Seq()
     val strings: List[String] = keys.get.map(_.substring(stationKeyPattern.length))
+    Log.fine(s"Read out ${strings.size} StationIds from Redis.")
     strings.map(StationId.makeStationId).flatMap(readStation)
   }
 
-  def readStation(stationId: StationId): Option[StationInfo] = {
-    val result = redis.hmget(StationRepository.redisKey(stationId), StationInfo.fields: _*)
+  override def readStation(stationId: StationId): Option[WxStation] = {
+    val result = redis.hmget(StationRepository.redisKey(stationId), WxStation.fields: _*)
     if (result.isDefined) {
-      StationInfo.valueOf(result.get)
+      WxStation.valueOf(result.get)
     }
     else None
   }
 
-  def saveStation(stationInfo: StationInfo): Option[StationId] = {
+  override def saveStation(stationInfo: WxStation): Option[StationId] = {
     val stationId = stationInfo.stationId
     if (redis.hmset(StationRepository.redisKey(stationId), stationInfo.toMap)) Some(stationId)
     else None
   }
 
-  def deleteStations(): Boolean = {
+  override def deleteStations(): Boolean = {
     val stations = readStations()
     val total = stations.size
     val deleted = stations.map(sId =>
@@ -108,8 +108,8 @@ class StationRepositoryImpl(env: {
       }
     ).sum
     val failures = total - deleted
-    log.info(s"(Redis) DELETE >> Deleted $deleted of $total stations.")
-    if (failures > 0) log.severe(s"(Redis) DELETE >> $failures errors occurred.")
+    Log.info(s"(Redis) DELETE >> Deleted $deleted of $total stations.")
+    if (failures > 0) Log.info(s"(Redis) DELETE >> $failures errors occurred.")
     deleted > 0
   }
 
@@ -122,4 +122,5 @@ class StationRepositoryImpl(env: {
   override def updateLastReport(stationId: StationId, time: Timestamp): Unit = {
     redis.hmset(StationRepository.redisKey(stationId), Seq(lastReportField -> time.toString))
   }
+
 }

@@ -14,11 +14,11 @@ class FakeStationRepository extends StationRepository {
     updateLastReportCount = 0
   }
 
-  var readStationsResponse: Seq[StationInfo] = Seq()
+  var readStationsResponse: Seq[WxStation] = Seq()
 
   var readStationsCount = 0
 
-  override def readStations(): Seq[StationInfo] = {
+  override def readStations(): Seq[WxStation] = {
     readStationsCount = readStationsCount + 1
     readStationsResponse
   }
@@ -34,11 +34,11 @@ class FakeStationRepository extends StationRepository {
     true
   }
 
-  override def readStation(stationId: StationId): Option[StationInfo] = ???
+  override def readStation(stationId: StationId): Option[WxStation] = ???
 
   var saveCount = 0
 
-  override def saveStation(stationInfo: StationInfo): Option[StationId] = {
+  override def saveStation(stationInfo: WxStation): Option[StationId] = {
     saveCount = saveCount + 1
     Some(stationInfo.stationId)
   }

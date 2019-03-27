@@ -40,7 +40,7 @@ class InitKafkaImpl(env: {
 
   implicit val spark: SparkSession = env.spark.session
 
-  def hasFeedReady(si: StationInfo): Boolean = {
+  def hasFeedReady(si: WxStation): Boolean = {
     si.feeds.exists(_._2 == READY)
   }
 

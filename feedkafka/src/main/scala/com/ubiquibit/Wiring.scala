@@ -21,6 +21,7 @@ object Wiring {
 
   lazy val initKafka: InitKafka = new InitKafkaImpl(this)
   lazy val initRedis: InitRedis = new InitRedisImpl(this)
-  lazy val reportFreqFromBeginning: ReportFreqFromBeginning = new ReportFreqFromBeginning(this)
+  lazy val updateLastWxReport: UpdateLastWxReport = new UpdateLastWxReport(this)
+  lazy val stageFromRedis: StageFromRedis = new StageFromRedis(this)
 
 }

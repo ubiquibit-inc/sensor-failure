@@ -20,19 +20,13 @@ trait FileReckoning {
   def feeds(): Map[StationId, Seq[BuoyData]]
 
   // only SUPPORTED feeds are included
-  def stationInfo(): Seq[StationInfo]
+  def stationInfo(): Seq[WxStation]
 
   // only SUPPORTED files
   def getFile(stationId: StationId, feed: BuoyData): Option[File]
 
   // only SUPPORTED files
   def pairs(): List[(StationId, BuoyData)]
-
-}
-
-trait SupportedFeeds {
-
-  def supported: List[BuoyData] = List(Text) // TODO load from Config instead, perhaps dynamically
 
 }
 
@@ -60,14 +54,14 @@ class FileReckoningImpl extends FileReckoning with SupportedFeeds {
     pairs().groupBy(_._1).mapValues(_.map(_._2))
   }
 
-  def stationInfo(): Seq[StationInfo] = {
+  def stationInfo(): Seq[WxStation] = {
     pairs()
       .groupBy(_._1)
       .map { (t) =>
         val staId = t._1
         val feeds = t._2
         (staId, feeds.filter(_._1 == staId).map(_._2 -> READY).toMap)
-        }.map(u => StationInfo(u._1, 0, TimeHelper.epochTimeZeroUTC().toString, u._2))
+        }.map(u => WxStation(u._1, 0, TimeHelper.epochTimeZeroUTC().toString, u._2))
       .toSeq
   }
 
