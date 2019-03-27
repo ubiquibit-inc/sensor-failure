@@ -5,12 +5,12 @@ import java.sql.Timestamp
 import com.ubiquibit.buoy.serialize.{DefSer}
 
 
-sealed abstract class WxRecord(eventTime: Timestamp, lineLength: Int) extends Serializable {
+sealed abstract class WxRecord(eventTime: Timestamp, lineLength: Int, stationId: String) extends Serializable {
 
   def valueOf(): Array[Byte] = DefSer.serialize(this)
 
 }
 
-case class TextRecord(eventTime: Timestamp, lineLength: Int, windDirection: Float, windSpeed: Float, gustSpeed: Float
+case class TextRecord(eventTime: Timestamp, lineLength: Int, stationId: String, windDirection: Float, windSpeed: Float, gustSpeed: Float
                       , waveHeight: Float, dominantWavePeriod: Float, averageWavePeriod: Float, mWaveDirection: Float, seaLevelPressure: Float
-                      , airTemp: Float, waterSurfaceTemp: Float, dewPointTemp: Float, visibility: Float, pressureTendency: Float, tide: Float) extends WxRecord(eventTime, lineLength)
+                      , airTemp: Float, waterSurfaceTemp: Float, dewPointTemp: Float, visibility: Float, pressureTendency: Float, tide: Float) extends WxRecord(eventTime, lineLength, stationId)

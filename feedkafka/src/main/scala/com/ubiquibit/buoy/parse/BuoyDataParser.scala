@@ -2,7 +2,7 @@ package com.ubiquibit.buoy.parse
 
 import java.sql.Timestamp
 
-import com.ubiquibit.buoy.TextRecord
+import com.ubiquibit.buoy.{StationId, TextRecord}
 import org.apache.spark.sql.{DataFrame, Row, SparkSession}
 
 import scala.annotation.tailrec
@@ -55,7 +55,7 @@ object Parsers {
 
 }
 
-class TextParser extends BuoyDataParser with java.io.Serializable {
+class TextParser(stationId: String) extends BuoyDataParser with Serializable {
 
   override def parseFile(fqFileName: String)(implicit spark: SparkSession): DataFrame = {
 
@@ -88,6 +88,7 @@ class TextParser extends BuoyDataParser with java.io.Serializable {
     val date = new Timestamp(l(0).toInt - 1900, l(1).toInt - 1, l(2).toInt, l(3).toInt, l(4).toInt, 0, 0)
     Row.fromSeq(Seq(date,
       len,
+      stationId,
       l(5).toFloat,
       l(6).toFloat,
       l(7).toFloat,

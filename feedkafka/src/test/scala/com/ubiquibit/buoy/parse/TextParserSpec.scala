@@ -4,13 +4,13 @@ import java.io.{File, PrintWriter}
 import java.nio.file.{Files, Path}
 
 import com.ubiquibit._
-import com.ubiquibit.buoy.TextRecord
+import com.ubiquibit.buoy.{CManId, StationId, TextRecord}
 import org.apache.spark.sql.{Row, SparkSession}
 import org.scalatest.BeforeAndAfter
 
 class TextParserSpec extends SparkSpec with BeforeAndAfter {
 
-  val instance = new TextParser
+  val testStationId = StationId.makeStationId("xyzpdq")
 
   val exampleTextData: String =
     """|#YY  MM DD hh mm WDIR WSPD GST  WVHT   DPD   APD MWD   PRES  ATMP  WTMP  DEWP  VIS PTDY  TIDE
@@ -40,6 +40,8 @@ class TextParserSpec extends SparkSpec with BeforeAndAfter {
 
     it("parse a single record") {
 
+      val instance = new TextParser(testStationId.toString)
+
       val row: Row = instance.processLine(payload)
 
       val t = row.getTimestamp(0)
@@ -50,6 +52,9 @@ class TextParserSpec extends SparkSpec with BeforeAndAfter {
       val len = row.getInt(1)
       assert(len == 78)
 
+      val stationId = row.getString(2)
+      assert(stationId === testStationId.toString)
+
       def f(idx: Int): Float = {
         val n = row.getFloat(idx)
         if (n.equals(Float.NaN)) n
@@ -57,7 +62,6 @@ class TextParserSpec extends SparkSpec with BeforeAndAfter {
       }
 
 
-      assert(f(2).isNaN)
       assert(f(3).isNaN)
       assert(f(3).isNaN)
       assert(f(4).isNaN)
@@ -65,16 +69,17 @@ class TextParserSpec extends SparkSpec with BeforeAndAfter {
       assert(f(6).isNaN)
       assert(f(7).isNaN)
       assert(f(8).isNaN)
+      assert(f(9).isNaN)
 
-      assert(Math.abs(f(9) - 1021.2) < epsilon)
-      assert(Math.abs(f(10) - 15.5) < epsilon)
-      assert(Math.abs(f(11) - 11.7) < epsilon)
+      assert(Math.abs(f(10) - 1021.2) < epsilon)
+      assert(Math.abs(f(11) - 15.5) < epsilon)
+      assert(Math.abs(f(12) - 11.7) < epsilon)
 
-      assert(f(12).isNaN)
       assert(f(13).isNaN)
+      assert(f(14).isNaN)
 
-      assert(Math.abs(f(14) + 1.3) < epsilon)
-      assert(f(15).isNaN)
+      assert(Math.abs(f(15) + 1.3) < epsilon)
+      assert(f(16).isNaN)
     }
 
     def problemFile = {
@@ -86,8 +91,10 @@ class TextParserSpec extends SparkSpec with BeforeAndAfter {
       fqFn
     }
 
-    it("parses a problem file...", SparkTest) { // turned off for speediness
+    val problemStationId:StationId = CManId("BD", "RN4")
+    val problemFileInstance = new TextParser(problemStationId.toString)
 
+    it("parses a problem file...", SparkTest) { // turned off for speediness
 
       val pFile: String = problemFile
 
@@ -95,7 +102,7 @@ class TextParserSpec extends SparkSpec with BeforeAndAfter {
 
       import spark.implicits._
 
-      val df = instance.parseFile(problemFile)
+      val df = problemFileInstance.parseFile(problemFile)
 
       val cnt = df.count()
 
@@ -111,7 +118,7 @@ class TextParserSpec extends SparkSpec with BeforeAndAfter {
 
       import spark.implicits._
 
-      val ds = instance
+      val ds = problemFileInstance
         .parseFile(file)
         .as[TextRecord]
 
@@ -130,7 +137,7 @@ class TextParserSpec extends SparkSpec with BeforeAndAfter {
 
       import spark.implicits._
 
-      val ds = instance
+      val ds = problemFileInstance
         .parseFile(file)
         .as[TextRecord]
 

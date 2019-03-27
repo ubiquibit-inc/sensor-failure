@@ -12,7 +12,8 @@ class ProducersSpec extends FunSpec with BeforeAndAfter {
 
   private val testCallback = new TestCallback
   private val fakeLineLength = 23
-  private val testRecord = TextRecord(TimeHelper.epochTimeZeroTimestamp(), fakeLineLength, rF(), rF(), rF(), rF(), rF(), rF(), rF(), rF(), rF(), rF(), rF(), rF(), rF(), rF())
+  private val stationId = "fll"
+  private val testRecord = TextRecord(TimeHelper.epochTimeZeroTimestamp(), fakeLineLength, stationId, rF(), rF(), rF(), rF(), rF(), rF(), rF(), rF(), rF(), rF(), rF(), rF(), rF(), rF())
 
   implicit def stationRepository: StationRepository = new FakeStationRepository
 

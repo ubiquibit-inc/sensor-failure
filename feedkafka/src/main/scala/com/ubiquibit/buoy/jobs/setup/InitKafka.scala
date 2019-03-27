@@ -69,7 +69,7 @@ class InitKafkaImpl(env: {
 
       log.info(s"Processing $stationId's $buoyData feed.")
       val file = filez.getFile(stationId, buoyData)
-      val parser = new TextParser
+      val parser = new TextParser(stationId.toString)
       val ds = parser
         .parseFile(file.get.getAbsolutePath)
         .as[TextRecord]

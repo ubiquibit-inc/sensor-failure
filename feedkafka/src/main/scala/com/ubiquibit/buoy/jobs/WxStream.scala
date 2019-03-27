@@ -18,11 +18,11 @@ class WxStream(env: {
   val spark: Spark
 }) extends Deserializer with RandomElements with TopicNamer {
 
-  val ss: SparkSession = env.spark.session
-  val sc: SparkContext = env.spark.sc
+  @transient val ss: SparkSession = env.spark.session
+  @transient val sc: SparkContext = env.spark.sc
   private val conf: Config = ConfigFactory.load()
 
-  private val Log: Logger = Logger.getLogger(getClass.getName)
+  @transient private val Log: Logger = Logger.getLogger(getClass.getName)
 
   def run(): Unit = {
 
@@ -36,13 +36,26 @@ class WxStream(env: {
     )
     val enc: Encoder[StationFeed] = Encoders.product[StationFeed]
 
-    val sf1 = ss.readStream
+    val topics = ss.read
       .option("header", false)
       .schema(schema = schema)
       .csv(path = conf.getString("stage.dir"))
       .as(enc)
+      .map(sf => topicName(StationId.makeStationId(sf.stationId), BuoyFeed.valueOf(sf.feedType).get))
+      .selectExpr("value AS topic")
+      .select('topic)
 
-    val debugOut = sf1
+    val topicString = topics.map(t=>t.getString(0)).collect().mkString(",")
+
+    val kafkaFeed = ss.readStream
+      .format("kafka")
+      .option("kafka.bootstrap.servers", conf.getString("bootstrap.servers"))
+      .option("subscribe", topicString)
+      .option("startingOffsets", "earliest")
+      .option("spark.sql.shuffle.partitions", conf.getString("spark.partitions"))
+      .load()
+
+    val debugOut = kafkaFeed
       .writeStream
       .format("console")
       .option("truncate", "false")
