@@ -20,7 +20,7 @@ class StageFeedsFromRedis(env: {
   private val repo: StationRepository = env.stationRepository
   private val conf: Config = ConfigFactory.load()
 
-  private val status: ImportStatus = DONE
+  private val status: WxFeedStatus = KAFKALOADED
 
   def feeds(): Seq[(StationId, BuoyFeed)] = {
 

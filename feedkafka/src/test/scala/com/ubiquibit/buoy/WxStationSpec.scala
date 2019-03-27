@@ -11,11 +11,11 @@ class WxStationSpec extends FunSpec with ShouldVerb{
 
   val simple = WxStation(statId0, 123)
 
-  val withFeeds = WxStation(statId1, 234, TimeHelper.epochTimeZeroUTC().toString, Map(Rain -> DONE, Ocean -> READY))
+  val withFeeds = WxStation(statId1, 234, TimeHelper.epochTimeZeroUTC().toString, Map(Rain -> KAFKALOADED, Ocean -> DOWNLOADED))
   private val withFeedsAsMap = Map[String, String](
     WxStation.stationIdKey -> statId1.toString,
     WxStation.reportFrequencyKey -> withFeeds.reportFrequencyMinutes.toString,
-    Rain.toString -> DONE.toString, Ocean.toString -> READY.toString
+    Rain.toString -> KAFKALOADED.toString, Ocean.toString -> DOWNLOADED.toString
   )
 
   describe("StationInfo should") {
@@ -29,8 +29,8 @@ class WxStationSpec extends FunSpec with ShouldVerb{
       val t = withFeeds.toMap
       assert(t(WxStation.stationIdKey) === statId1.toString)
       assert(t(WxStation.reportFrequencyKey) === "234")
-      assert(t(Rain.toString.toUpperCase) === DONE.toString.toUpperCase)
-      assert(t(Ocean.toString.toUpperCase) === READY.toString.toUpperCase)
+      assert(t(Rain.toString.toUpperCase) === KAFKALOADED.toString.toUpperCase)
+      assert(t(Ocean.toString.toUpperCase) === DOWNLOADED.toString.toUpperCase)
 
     }
 

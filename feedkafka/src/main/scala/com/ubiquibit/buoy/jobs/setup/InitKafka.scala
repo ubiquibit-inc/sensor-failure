@@ -31,7 +31,7 @@ class InitKafkaImpl(env: {
   val fileReckoning: FileReckoning
 }) extends InitKafka with TopicNamer with RandomElements with Serializable {
 
-  private val log: Logger = Logger.getLogger(getClass.getName)
+  @transient private val Log: Logger = Logger.getLogger(getClass.getName)
 
   private val repo: StationRepository = env.stationRepository
   private val filez: FileReckoning = env.fileReckoning
@@ -40,7 +40,7 @@ class InitKafkaImpl(env: {
   implicit val spark: SparkSession = env.spark.session
 
   def hasFeedReady(si: WxStation): Boolean = {
-    si.feeds.exists(_._2 == READY)
+    si.feeds.exists(_._2 == DOWNLOADED)
   }
 
   def run(): Unit = {
@@ -50,24 +50,24 @@ class InitKafkaImpl(env: {
         .readStations()
         .filter(hasFeedReady)
         .map(sta => (sta.stationId, sta.feeds))
-        .map { case ((record: (StationId, Map[BuoyFeed, ImportStatus]))) =>
-          val first = record._2.filter((m) => m._2 == READY).take(1).head
+        .map { case ((record: (StationId, Map[BuoyFeed, WxFeedStatus]))) =>
+          val first = record._2.filter((m) => m._2 == DOWNLOADED).take(1).head
           (record._1, first._1)
         }
 
-    log.info(s"Found ${candidates.size} candidate stations.")
+    Log.info(s"Found ${candidates.size} candidate stations.")
 
     randomElemOf(candidates).foreach(t => { // there's really (at most?) one
 
       val stationId = t._1
       val buoyData = t._2
-      log.fine(s"Proceeding with $stationId's $buoyData file.")
+      Log.fine(s"Proceeding with $stationId's $buoyData file.")
 
-      repo.updateImportStatus(stationId, buoyData, WORKING)
+      repo.updateImportStatus(stationId, buoyData, KAFKALOADING)
 
       import spark.implicits._
 
-      log.info(s"Processing $stationId's $buoyData feed.")
+      Log.info(s"Processing $stationId's $buoyData feed.")
       val file = filez.getFile(stationId, buoyData)
       val parser = new TextParser(stationId.toString)
       val ds = parser
@@ -75,7 +75,7 @@ class InitKafkaImpl(env: {
         .as[TextRecord]
 
       val topic: String = topicName(stationId, buoyData)
-      log.info(s"Will attempt to sink to Kafka topic = $topic.")
+      Log.info(s"Will attempt to sink to Kafka topic = $topic.")
 
       val df = ds.map(_.valueOf())
       df.write
@@ -86,11 +86,9 @@ class InitKafkaImpl(env: {
 
       val cnt = df.count()
 
-      val someDF = Seq(("1", "jason"), ("2", "shelley")).toDF("key", "value")
+      Log.info(s"Processed $cnt lines of $stationId's $buoyData feed.")
 
-      log.info(s"Processed $cnt lines of $stationId's $buoyData feed.")
-
-      repo.updateImportStatus(stationId, buoyData, DONE)
+      repo.updateImportStatus(stationId, buoyData, KAFKALOADED)
 
     })
 

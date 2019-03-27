@@ -60,7 +60,7 @@ class FileReckoningImpl extends FileReckoning with SupportedFeeds {
       .map { (t) =>
         val staId = t._1
         val feeds = t._2
-        (staId, feeds.filter(_._1 == staId).map(_._2 -> READY).toMap)
+        (staId, feeds.filter(_._1 == staId).map(_._2 -> DOWNLOADED).toMap)
         }.map(u => WxStation(u._1, 0, TimeHelper.epochTimeZeroUTC().toString, u._2))
       .toSeq
   }

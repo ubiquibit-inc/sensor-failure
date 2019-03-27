@@ -16,9 +16,9 @@ trait StationRepository extends Serializable {
 
   def readStation(stationId: StationId): Option[WxStation]
 
-  def getImportStatus(stationId: StationId, buoyData: BuoyFeed): Option[ImportStatus]
+  def getImportStatus(stationId: StationId, buoyData: BuoyFeed): Option[WxFeedStatus]
 
-  def updateImportStatus(stationId: StationId, buoyData: BuoyFeed, importStatus: ImportStatus): Option[ImportStatus]
+  def updateImportStatus(stationId: StationId, buoyData: BuoyFeed, importStatus: WxFeedStatus): Option[WxFeedStatus]
 
   def deleteStations(): Boolean
 
@@ -51,11 +51,11 @@ class StationRepositoryImpl(env: {
   private val lastReportField = "lastReportUTC"
   private val stationKeyPattern = StationRepository.stationKeyPattern
 
-  override def updateImportStatus(stationId: StationId, buoyData: BuoyFeed, importStatus: ImportStatus): Option[ImportStatus] = {
+  override def updateImportStatus(stationId: StationId, buoyData: BuoyFeed, importStatus: WxFeedStatus): Option[WxFeedStatus] = {
     if (stationExists(stationId).isEmpty) return None
     require(BuoyFeed.values.contains(buoyData))
     importStatus match {
-      case ERROR | WORKING | DONE =>
+      case ERROR | KAFKALOADING | KAFKALOADED =>
         if (redis.hmset(StationRepository.redisKey(stationId), Seq(buoyData.toString -> importStatus.toString))) Some(importStatus)
         else {
           Log.info(s"Error updating stationId $stationId to $importStatus.")
@@ -68,11 +68,11 @@ class StationRepositoryImpl(env: {
     }
   }
 
-  override def getImportStatus(stationId: StationId, buoyData: BuoyFeed): Option[ImportStatus] = {
+  override def getImportStatus(stationId: StationId, buoyData: BuoyFeed): Option[WxFeedStatus] = {
     val bdType = buoyData.toString.toUpperCase
     redis.hmget(StationRepository.redisKey(stationId), bdType)
       .flatMap(_.get(bdType))
-      .flatMap(ImportStatus.valueOf)
+      .flatMap(WxFeedStatus.valueOf)
   }
 
   override def readStations(): Seq[WxStation] = {

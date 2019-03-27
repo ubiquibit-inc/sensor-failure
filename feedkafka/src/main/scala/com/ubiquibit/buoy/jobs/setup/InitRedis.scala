@@ -1,5 +1,6 @@
 package com.ubiquibit.buoy.jobs.setup
 
+import com.ubiquibit.Wiring
 import com.ubiquibit.buoy._
 
 /**
@@ -55,6 +56,14 @@ class InitRedisImpl(env: {
     val successes = for (st <- filez.stationInfo())
       yield repo.saveStation(st)
     successes.count(_.isDefined)
+  }
+
+}
+
+object InitRedisImpl {
+
+  def main(args: Array[String]): Unit = {
+    Wiring.initRedis.run()
   }
 
 }

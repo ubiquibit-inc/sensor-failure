@@ -12,7 +12,7 @@ import com.ubiquibit.TimeHelper.epochTimeZeroUTC
 case class WxStation(stationId: StationId,
                      reportFrequencyMinutes: Int,
                      lastReport: String = epochTimeZeroUTC().toString,
-                     feeds: Map[BuoyFeed, ImportStatus] = Map.empty) {
+                     feeds: Map[BuoyFeed, WxFeedStatus] = Map.empty) {
 
   def toMap: Map[String, String] = {
     Map(WxStation.stationIdKey -> stationId.toString, WxStation.reportFrequencyKey -> reportFrequencyMinutes.toString, WxStation.lastReportKey -> lastReport) ++
@@ -40,8 +40,8 @@ object WxStation extends SupportedFeeds {
     val reportFreq = map get reportFrequencyKey
     val lastRpt = map get lastReportKey
     val feeds = map
-      .filter((t) => BuoyFeed.valueOf(t._1).isDefined && ImportStatus.valueOf(t._2).isDefined)
-      .map((t) => (BuoyFeed.valueOf(t._1).get, ImportStatus.valueOf(t._2).get))
+      .filter((t) => BuoyFeed.valueOf(t._1).isDefined && WxFeedStatus.valueOf(t._2).isDefined)
+      .map((t) => (BuoyFeed.valueOf(t._1).get, WxFeedStatus.valueOf(t._2).get))
     if (stationId.isDefined && reportFreq.isDefined) {
       var rpt = ""
       if (lastRpt.isEmpty) rpt = epochTimeZeroUTC().toString
