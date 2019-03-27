@@ -1,4 +1,4 @@
-package com.ubiquibit.buoy.jobs
+package com.ubiquibit.buoy.jobs.setup
 
 import java.util.logging.Logger
 
@@ -45,12 +45,12 @@ class InitKafkaImpl(env: {
 
   def run(): Unit = {
 
-    val candidates: Seq[(StationId, BuoyData)] =
+    val candidates: Seq[(StationId, BuoyFeed)] =
       repo
         .readStations()
         .filter(hasFeedReady)
         .map(sta => (sta.stationId, sta.feeds))
-        .map { case ((record: (StationId, Map[BuoyData, ImportStatus]))) =>
+        .map { case ((record: (StationId, Map[BuoyFeed, ImportStatus]))) =>
           val first = record._2.filter((m) => m._2 == READY).take(1).head
           (record._1, first._1)
         }

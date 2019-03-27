@@ -1,12 +1,12 @@
 package com.ubiquibit.buoy.serialize
 
-import com.ubiquibit.buoy.{BuoyData, WxRecord}
+import com.ubiquibit.buoy.{BuoyFeed, WxRecord}
 import org.apache.kafka.common.serialization.Serializer
 
 object Serializers {
 
 
-  def of(buoyData: BuoyData): Serializer[WxRecord] = new DefaultSerializer
+  def of(buoyData: BuoyFeed): Serializer[WxRecord] = new DefaultSerializer
 
 }
 

@@ -1,5 +1,6 @@
 package com.ubiquibit.buoy.jobs
 
+import com.ubiquibit.buoy.jobs.setup.InitKafkaImpl
 import com.ubiquibit.{FakeSpark, FakeStationRepository, Spark}
 import com.ubiquibit.buoy.{FakeFileReckoning, StationRepository}
 import org.scalatest.{BeforeAndAfter, FunSpec}

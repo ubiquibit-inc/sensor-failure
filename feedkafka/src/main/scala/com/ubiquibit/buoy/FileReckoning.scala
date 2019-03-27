@@ -17,16 +17,16 @@ trait FileReckoning {
   def stationIds(): Seq[StationId]
 
   // ALL feeds
-  def feeds(): Map[StationId, Seq[BuoyData]]
+  def feeds(): Map[StationId, Seq[BuoyFeed]]
 
   // only SUPPORTED feeds are included
   def stationInfo(): Seq[WxStation]
 
   // only SUPPORTED files
-  def getFile(stationId: StationId, feed: BuoyData): Option[File]
+  def getFile(stationId: StationId, feed: BuoyFeed): Option[File]
 
   // only SUPPORTED files
-  def pairs(): List[(StationId, BuoyData)]
+  def pairs(): List[(StationId, BuoyFeed)]
 
 }
 
@@ -40,7 +40,7 @@ class FileReckoningImpl extends FileReckoning with SupportedFeeds {
 
   private val filenameSupported: (String) => Boolean = { absolutePath => supported.exists(_.same(new File(absolutePath))) }
 
-  def getFile(stationId: StationId, ofType: BuoyData): Option[File] = {
+  def getFile(stationId: StationId, ofType: BuoyFeed): Option[File] = {
     if (!feeds.exists(_._1 == stationId)) None
     val expectedName = s"${stationId.toString}.${ofType.ext}".toUpperCase
     supportedFiles.find {
@@ -50,7 +50,7 @@ class FileReckoningImpl extends FileReckoning with SupportedFeeds {
 
   def stationIds(): Seq[StationId] = pairs().map(_._1).distinct
 
-  def feeds(): Map[StationId, Seq[BuoyData]] = {
+  def feeds(): Map[StationId, Seq[BuoyFeed]] = {
     pairs().groupBy(_._1).mapValues(_.map(_._2))
   }
 
@@ -66,11 +66,11 @@ class FileReckoningImpl extends FileReckoning with SupportedFeeds {
   }
 
   // all station/output files on disk
-  def pairs(): List[(StationId, BuoyData)] = {
+  def pairs(): List[(StationId, BuoyFeed)] = {
     supportedFiles
       .map(f => f.getName)
       .map(_.split("\\."))
-      .map { arr => (makeStationId(arr(0)), BuoyData.values.find(_.ext.equalsIgnoreCase(arr(1)))) }
+      .map { arr => (makeStationId(arr(0)), BuoyFeed.values.find(_.ext.equalsIgnoreCase(arr(1)))) }
       .filter(_._2.isDefined)
       .map((a) => (a._1, a._2.get))
   }

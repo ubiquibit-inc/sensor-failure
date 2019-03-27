@@ -12,7 +12,7 @@ import com.ubiquibit.TimeHelper.epochTimeZeroUTC
 case class WxStation(stationId: StationId,
                      reportFrequencyMinutes: Int,
                      lastReport: String = epochTimeZeroUTC().toString,
-                     feeds: Map[BuoyData, ImportStatus] = Map.empty) {
+                     feeds: Map[BuoyFeed, ImportStatus] = Map.empty) {
 
   def toMap: Map[String, String] = {
     Map(WxStation.stationIdKey -> stationId.toString, WxStation.reportFrequencyKey -> reportFrequencyMinutes.toString, WxStation.lastReportKey -> lastReport) ++
@@ -30,7 +30,7 @@ object WxStation extends SupportedFeeds {
   private[buoy] val reportFrequencyKey: String = "reportFrequencyMinutes"
   private[buoy] val lastReportKey: String = "lastReport"
 
-  private val allFeeds: List[String] = BuoyData.values.map(v => v.toString).toList
+  private val allFeeds: List[String] = BuoyFeed.values.map(v => v.toString).toList
   private val supportedFeeds: List[String] = supported.map(v => v.toString)
   private[buoy] val staticFields: List[String] = stationIdKey :: reportFrequencyKey :: lastReportKey :: Nil
   private[buoy] val fields: List[String] = staticFields ++ supportedFeeds // ++ allFeeds
@@ -40,8 +40,8 @@ object WxStation extends SupportedFeeds {
     val reportFreq = map get reportFrequencyKey
     val lastRpt = map get lastReportKey
     val feeds = map
-      .filter((t) => BuoyData.valueOf(t._1).isDefined && ImportStatus.valueOf(t._2).isDefined)
-      .map((t) => (BuoyData.valueOf(t._1).get, ImportStatus.valueOf(t._2).get))
+      .filter((t) => BuoyFeed.valueOf(t._1).isDefined && ImportStatus.valueOf(t._2).isDefined)
+      .map((t) => (BuoyFeed.valueOf(t._1).get, ImportStatus.valueOf(t._2).get))
     if (stationId.isDefined && reportFreq.isDefined) {
       var rpt = ""
       if (lastRpt.isEmpty) rpt = epochTimeZeroUTC().toString

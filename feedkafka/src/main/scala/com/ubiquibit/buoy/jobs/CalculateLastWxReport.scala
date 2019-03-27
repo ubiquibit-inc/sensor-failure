@@ -9,7 +9,8 @@ import org.apache.spark.SparkContext
 import org.apache.spark.sql._
 
 /**
-  * This fun littel job reads up the static data files and computes the most recent [[WxStation]] report. And no one even cares...
+  * This fun littel job reads up the static data files and computes the most
+  * recent [[WxStation]] report. And no one even cares...
   *
   * @param env DI injected in [[Wiring]]
   */

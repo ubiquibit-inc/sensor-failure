@@ -1,4 +1,4 @@
-package com.ubiquibit.buoy.jobs
+package com.ubiquibit.buoy.jobs.setup
 
 import com.ubiquibit.Wiring
 

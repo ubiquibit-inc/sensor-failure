@@ -23,13 +23,13 @@ trait Producer[WxRec <: WxRecord] {
 }
 
 trait TopicNamer {
-  def topicName(stationId: StationId, buoyData: BuoyData): String = {
+  def topicName(stationId: StationId, buoyData: BuoyFeed): String = {
     stationId.toString + "-" + buoyData.ext.toUpperCase
   }
 }
 
 class KafkaProducerImpl(stationId: StationId,
-                        buoyData: BuoyData,
+                        buoyData: BuoyFeed,
                         callback: Callback) extends Producer[WxRecord] with TopicNamer {
 
   val conf: Config = ConfigFactory.load()
@@ -57,12 +57,12 @@ class KafkaProducerImpl(stationId: StationId,
 
 object Producers {
 
-  def of(stationId: StationId, buoyData: BuoyData, cb: Option[Callback] = None)(implicit stationRepository: StationRepository): Producer[WxRecord] = {
+  def of(stationId: StationId, buoyData: BuoyFeed, cb: Option[Callback] = None)(implicit stationRepository: StationRepository): Producer[WxRecord] = {
     if (cb.isEmpty) new KafkaProducerImpl(stationId, buoyData, new ProducerCallback(stationRepository, stationId, buoyData))
     else new KafkaProducerImpl(stationId, buoyData, cb.get)
   }
 
-  class ProducerCallback(stationRepository: StationRepository, stationId: StationId, buoyData: BuoyData) extends Callback with Serializable {
+  class ProducerCallback(stationRepository: StationRepository, stationId: StationId, buoyData: BuoyFeed) extends Callback with Serializable {
     override def onCompletion(recordMetadata: RecordMetadata, e: Exception): Unit = {
       if (e != null) {
         println(s"Error sending message to Kafka: $recordMetadata")

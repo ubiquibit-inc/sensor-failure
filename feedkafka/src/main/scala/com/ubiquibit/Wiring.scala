@@ -1,6 +1,7 @@
 package com.ubiquibit
 
 import com.ubiquibit.buoy.jobs._
+import com.ubiquibit.buoy.jobs.setup._
 import com.ubiquibit.buoy.{FileReckoning, FileReckoningImpl, StationRepository, StationRepositoryImpl}
 
 /**
@@ -22,6 +23,7 @@ object Wiring {
   lazy val initKafka: InitKafka = new InitKafkaImpl(this)
   lazy val initRedis: InitRedis = new InitRedisImpl(this)
   lazy val updateLastWxReport: CalculateLastWxReport = new CalculateLastWxReport(this)
-  lazy val stageFromRedis: StageFromRedis = new StageFromRedis(this)
+  lazy val stageFromRedis: StageFeedsFromRedis = new StageFeedsFromRedis(this)
+  lazy val wxStream: WxStream  = new WxStream(this)
 
 }

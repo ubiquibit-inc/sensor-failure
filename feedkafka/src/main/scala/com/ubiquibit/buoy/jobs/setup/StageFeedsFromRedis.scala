@@ -1,10 +1,10 @@
-package com.ubiquibit.buoy.jobs
+package com.ubiquibit.buoy.jobs.setup
 
 import java.io.{BufferedWriter, File, FileWriter}
 
 import com.typesafe.config.{Config, ConfigFactory}
-import com.ubiquibit.{RandomElements, Wiring}
 import com.ubiquibit.buoy._
+import com.ubiquibit.{RandomElements, Wiring}
 
 /**
   * Takes [[WxStation]] info out of [[com.redis.Redis]] and puts it into
@@ -13,7 +13,7 @@ import com.ubiquibit.buoy._
   *
   * @param env DI from [[Wiring]]
   */
-class StageFromRedis(env: {
+class StageFeedsFromRedis(env: {
   val stationRepository: StationRepository
 }) extends RandomElements {
 
@@ -22,7 +22,7 @@ class StageFromRedis(env: {
 
   private val status: ImportStatus = DONE
 
-  def feeds(): Seq[(StationId, BuoyData)] = {
+  def feeds(): Seq[(StationId, BuoyFeed)] = {
 
     val feeds = for (wxStation <- repo.readStations()
                          if wxStation.feeds.exists(f => f._2 == status))
@@ -57,7 +57,7 @@ class StageFromRedis(env: {
 
 }
 
-object StageFromRedis {
+object StageFeedsFromRedis {
 
   def main(args: Array[String]): Unit = {
     Wiring.stageFromRedis.run(1000L)

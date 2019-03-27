@@ -2,6 +2,7 @@ package com.ubiquibit.buoy.jobs
 
 import com.ubiquibit.FakeStationRepository
 import com.ubiquibit.buoy._
+import com.ubiquibit.buoy.jobs.setup.{InitRedis, InitRedisImpl}
 import org.scalatest.{BeforeAndAfter, FunSpec}
 
 class InitRedisSpec

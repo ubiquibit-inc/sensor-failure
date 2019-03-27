@@ -22,7 +22,7 @@ class StationRepositorySpec extends FunSpec with BeforeAndAfter {
   private val stationId0 = StationId.makeStationId("abcdefg")
   private val station0type0 = Ocean
   private val station0type1 = Adcp2
-  private val station0Info = WxStation(stationId0, 0, feeds = Map[BuoyData, ImportStatus](station0type0 -> READY, station0type1 -> UNSUPPORTED))
+  private val station0Info = WxStation(stationId0, 0, feeds = Map[BuoyFeed, ImportStatus](station0type0 -> READY, station0type1 -> UNSUPPORTED))
 
   private val stationId1 = StationId.makeStationId("xyqpdq")
   private val station1type0 = Text
@@ -46,7 +46,7 @@ class StationRepositorySpec extends FunSpec with BeforeAndAfter {
 
     it("return import status") {
 
-      val mt = instance.getImportStatus(makeStationId("aadbkasjdgbj"), BuoyData.values.head)
+      val mt = instance.getImportStatus(makeStationId("aadbkasjdgbj"), BuoyFeed.values.head)
       assert(mt === None)
       assert(fakeClient.getCount === 1)
 
@@ -66,7 +66,7 @@ class StationRepositorySpec extends FunSpec with BeforeAndAfter {
 
     it("update import status") {
 
-      val result0 = instance.updateImportStatus(makeStationId("abababa"), BuoyData.values.head, READY)
+      val result0 = instance.updateImportStatus(makeStationId("abababa"), BuoyFeed.values.head, READY)
       assert(fakeClient.keysCount === 1)
       assert(fakeClient.setCount === 0)
       assert(result0 === None)
