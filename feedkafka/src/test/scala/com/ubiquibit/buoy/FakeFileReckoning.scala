@@ -28,9 +28,9 @@ class FakeFileReckoning extends FileReckoning {
   }
 
   var feedCount = 0
-  var fakeFeeds: Map[StationId, Seq[BuoyFeed]] = Map()
+  var fakeFeeds: Map[StationId, Seq[WxFeed]] = Map()
 
-  override def feeds(): collection.Map[StationId, Seq[BuoyFeed]] = {
+  override def feeds(): collection.Map[StationId, Seq[WxFeed]] = {
     feedCount = feedCount + 1
     fakeFeeds
   }
@@ -45,10 +45,10 @@ class FakeFileReckoning extends FileReckoning {
 
   var pairCount = 0
 
-  override def pairs(): List[(StationId, BuoyFeed)] = {
+  override def pairs(): List[(StationId, WxFeed)] = {
     pairCount = pairCount + 1
     List()
   }
 
-  override def getFile(stationId: StationId, ofType: BuoyFeed): Option[File] = Some(new FakeFile(stationId.toString))
+  override def getFile(stationId: StationId, ofType: WxFeed): Option[File] = Some(new FakeFile(stationId.toString))
 }

@@ -23,9 +23,9 @@ class FakeStationRepository extends StationRepository {
     readStationsResponse
   }
 
-  override def updateImportStatus(stationId: StationId, buoyData: BuoyFeed, importStatus: WxFeedStatus): Option[WxFeedStatus] = throw new UnsupportedOperationException("updateImportStatus")
+  override def updateImportStatus(stationId: StationId, buoyData: WxFeed, importStatus: WxFeedStatus): Option[WxFeedStatus] = throw new UnsupportedOperationException("updateImportStatus")
 
-  override def getImportStatus(stationId: StationId, buoyData: BuoyFeed): Option[WxFeedStatus] = throw new UnsupportedOperationException("getImportStatus")
+  override def getImportStatus(stationId: StationId, buoyData: WxFeed): Option[WxFeedStatus] = throw new UnsupportedOperationException("getImportStatus")
 
   var deleteCount = 0
 

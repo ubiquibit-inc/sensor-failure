@@ -17,13 +17,13 @@ class FileReckoningSpec extends FunSpec {
 
     override def stationIds: Seq[StationId] = Seq("abcde", "123123").map(makeStationId)
 
-    override def feeds: Map[StationId, Seq[BuoyFeed]] = Map(stationIds.head -> Seq(fmt1, fmt0), stationIds()(1) -> Seq(fmt1))
+    override def feeds: Map[StationId, Seq[WxFeed]] = Map(stationIds.head -> Seq(fmt1, fmt0), stationIds()(1) -> Seq(fmt1))
 
-    override def getFile(stationId: StationId, ofType: BuoyFeed): Option[File] = Some(new FakeFile(stationId.toString))
+    override def getFile(stationId: StationId, ofType: WxFeed): Option[File] = Some(new FakeFile(stationId.toString))
 
     override def stationInfo(): Seq[WxStation] = ???
 
-    override def pairs(): List[(StationId, BuoyFeed)] = ???
+    override def pairs(): List[(StationId, WxFeed)] = ???
   }
 
   val config: Config = ConfigFactory.load()

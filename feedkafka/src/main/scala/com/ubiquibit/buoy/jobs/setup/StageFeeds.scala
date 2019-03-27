@@ -8,12 +8,12 @@ import com.ubiquibit.{RandomElements, Wiring}
 
 /**
   * Takes [[WxStation]] info out of [[com.redis.Redis]] and puts it into
-  * into a staging file. When a downstream Spark stream
+  * into a staging temp file in the staging directory. When a downstream Spark stream
   * reads the contents, it kicks of an import from Kafka.
   *
   * @param env DI from [[Wiring]]
   */
-class StageFeedsFromRedis(env: {
+class StageFeeds(env: {
   val stationRepository: StationRepository
 }) extends RandomElements {
 
@@ -22,10 +22,10 @@ class StageFeedsFromRedis(env: {
 
   private val status: WxFeedStatus = KAFKALOADED
 
-  def feeds(): Seq[(StationId, BuoyFeed)] = {
+  def feeds(): Seq[(StationId, WxFeed)] = {
 
     val feeds = for (wxStation <- repo.readStations()
-                         if wxStation.feeds.exists(f => f._2 == status))
+                     if wxStation.feeds.exists(f => f._2 == status))
       yield wxStation
         .feeds
         .filter(f => f._2 == status)
@@ -37,10 +37,11 @@ class StageFeedsFromRedis(env: {
 
   def run(snoozeMs: Long): Unit = {
 
-    val stageFile = conf.getString("stage.file")
-    val writer = new BufferedWriter(new FileWriter(new File(stageFile), true))
+    val stageDir = conf.getString("stage.dir")
+    val tempFile = File.createTempFile("FeedStage", ".csv", new File(stageDir))
+    val writer = new BufferedWriter(new FileWriter(tempFile, true))
 
-    for( f <- feeds() ) {
+    for (f <- feeds()) {
 
       writer.write(s"${f._1},${f._2}")
       writer.newLine()
@@ -57,7 +58,7 @@ class StageFeedsFromRedis(env: {
 
 }
 
-object StageFeedsFromRedis {
+object StageFeeds {
 
   def main(args: Array[String]): Unit = {
     Wiring.stageFromRedis.run(1000L)

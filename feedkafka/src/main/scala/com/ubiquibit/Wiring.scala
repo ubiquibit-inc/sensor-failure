@@ -23,7 +23,7 @@ object Wiring {
   lazy val initKafka: InitKafka = new InitKafkaImpl(this)
   lazy val initRedis: InitRedis = new InitRedisImpl(this)
   lazy val updateLastWxReport: CalculateLastWxReport = new CalculateLastWxReport(this)
-  lazy val stageFromRedis: StageFeedsFromRedis = new StageFeedsFromRedis(this)
+  lazy val stageFromRedis: StageFeeds = new StageFeeds(this)
   lazy val wxStream: WxStream  = new WxStream(this)
 
 }

@@ -12,7 +12,7 @@ import org.apache.spark.sql.SparkSession
   * This util is for bootstrapping the system, and comes after Redis
   * has been initialized. It's a one-off operation, it:
   *
-  * 1. Asks Redis for a file that is in the READY state
+  * 1. Asks Redis for a file that is in [[DOWNLOADED]] status
   * 2. Reads it up as a DataFrame
   * 3. Pumps it into Kafka
   * 4. Exits
@@ -45,12 +45,12 @@ class InitKafkaImpl(env: {
 
   def run(): Unit = {
 
-    val candidates: Seq[(StationId, BuoyFeed)] =
+    val candidates: Seq[(StationId, WxFeed)] =
       repo
         .readStations()
         .filter(hasFeedReady)
         .map(sta => (sta.stationId, sta.feeds))
-        .map { case ((record: (StationId, Map[BuoyFeed, WxFeedStatus]))) =>
+        .map { case ((record: (StationId, Map[WxFeed, WxFeedStatus]))) =>
           val first = record._2.filter((m) => m._2 == DOWNLOADED).take(1).head
           (record._1, first._1)
         }

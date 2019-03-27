@@ -41,7 +41,7 @@ class WxStream(env: {
       .schema(schema = schema)
       .csv(path = conf.getString("stage.dir"))
       .as(enc)
-      .map(sf => topicName(StationId.makeStationId(sf.stationId), BuoyFeed.valueOf(sf.feedType).get))
+      .map(sf => topicName(StationId.makeStationId(sf.stationId), WxFeed.valueOf(sf.feedType).get))
       .selectExpr("value AS topic")
       .select('topic)
 
