@@ -6,6 +6,13 @@ import com.typesafe.config.{Config, ConfigFactory}
 import com.ubiquibit.{RandomElements, Wiring}
 import com.ubiquibit.buoy._
 
+/**
+  * Takes [[WxStation]] info out of [[com.redis.Redis]] and puts it into
+  * into a staging file. When a downstream Spark stream
+  * reads the contents, it kicks of an import from Kafka.
+  *
+  * @param env DI from [[Wiring]]
+  */
 class StageFromRedis(env: {
   val stationRepository: StationRepository
 }) extends RandomElements {
