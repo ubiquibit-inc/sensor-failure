@@ -8,6 +8,9 @@ import com.ubiquibit.buoy._
 import com.ubiquibit.buoy.serialize.DefSer
 import org.apache.spark.SparkContext
 import org.apache.spark.sql._
+import org.apache.spark.sql.catalyst.expressions.Minute
+import org.apache.spark.sql.expressions.scalalang.typed
+//import org.apache.spark.sql.expressions.Window
 import org.apache.spark.sql.types.{StringType, StructField, StructType}
 
 case class StationFeed(stationId: String, feedType: String)
@@ -42,7 +45,7 @@ class WxStream(env: {
       .schema(schema = stationFeedSchema)
       .csv(path = conf.getString("stage.dir"))
       .as(enc)
-      .flatMap(sf => topicName(StationId.makeStationId(sf.stationId), WxFeed.valueOf(sf.feedType).get))
+      .map(sf => topicName(StationId.makeStationId(sf.stationId), WxFeed.valueOf(sf.feedType).get))
       .selectExpr("value AS topic")
       .select('topic)
 
@@ -61,6 +64,9 @@ class WxStream(env: {
 
     val recordStream = kafkaFeed
       .map(deserialize)
+      .withWatermark("eventTime", "12 hours")
+      .groupBy(window($"eventTime", "1 hour", "15 minutes"), 'stationId, 'eventTime)
+      .agg('eventTime)
 
     recordStream.printSchema()
 
