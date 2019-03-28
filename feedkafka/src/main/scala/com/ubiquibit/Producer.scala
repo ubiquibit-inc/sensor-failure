@@ -26,6 +26,9 @@ trait TopicNamer {
   def topicName(stationId: StationId, buoyData: WxFeed): String = {
     stationId.toString + "-" + buoyData.ext.toUpperCase
   }
+  def topicName(stationId: StationId, wxFeed: String): String = {
+    stationId.toString + "-" + wxFeed.toUpperCase()
+  }
 }
 
 class KafkaProducerImpl(stationId: StationId,

@@ -25,48 +25,52 @@ class WxStream(env: {
 
   @transient private val Log: Logger = Logger.getLogger(getClass.getName)
 
+  import WxStream._
+
   def run(): Unit = {
 
     import ss.implicits._
     import org.apache.spark.sql.Encoders._
     import org.apache.spark.sql.functions._
 
-    val schema = StructType(
-      StructField("stationId", StringType, false) ::
-        StructField("feedType", StringType, false) :: Nil
-    )
     val enc: Encoder[StationFeed] = Encoders.product[StationFeed]
+
+    SparkSession.setActiveSession(ss)
 
     val topics = ss.read
       .option("header", false)
-      .schema(schema = schema)
+      .schema(schema = stationFeedSchema)
       .csv(path = conf.getString("stage.dir"))
       .as(enc)
-      .map(sf => topicName(StationId.makeStationId(sf.stationId), WxFeed.valueOf(sf.feedType).get))
+      .flatMap(sf => topicName(StationId.makeStationId(sf.stationId), WxFeed.valueOf(sf.feedType).get))
       .selectExpr("value AS topic")
       .select('topic)
-      .map(t => t.getString(0)).collect().mkString(",")
 
-    Log.info(s"Reading topics: $topics")
+    val topicString = topics.map(t => t.getString(0))
+      .collect()
+      .mkString(",")
+    Log.info(s"Reading topics: $topicString")
 
     val kafkaFeed = ss.readStream
       .format("kafka")
       .option("kafka.bootstrap.servers", conf.getString("bootstrap.servers"))
-      .option("subscribe", topics)
+      .option("subscribe", topicString)
       .option("startingOffsets", "earliest")
       .option("spark.sql.shuffle.partitions", conf.getString("spark.partitions"))
       .load()
 
-    val recordStream = kafkaFeed.map(row =>
-      DefSer.deserialize(row.getAs[Array[Byte]]("value")).asInstanceOf[TextRecord]
-    )
+    val recordStream = kafkaFeed
+      .map(deserialize)
 
-//    recordStream.printSchema()
+    recordStream.printSchema()
+
+    // (Flat)MapGroupsWithState
 
     val debugOut = recordStream
       .writeStream
       .format("console")
       .option("truncate", "false")
+      .outputMode("append")
       .start
 
     debugOut.awaitTermination()
@@ -75,25 +79,26 @@ class WxStream(env: {
 
 }
 
-object WxStream {
+object WxStream extends TopicNamer {
+
+  def nameForFeed(stationFeed: StationFeed): Option[(String, WxFeed)] = {
+    val feed: Option[WxFeed] = WxFeed.valueOf(stationFeed.feedType)
+    if (feed.isDefined)
+      Some((stationFeed.stationId, feed.get))
+    else None
+  }
+
+  val stationFeedSchema: StructType = StructType(
+    StructField("stationId", StringType, false) ::
+      StructField("feedType", StringType, false) :: Nil
+  )
+
+  def deserialize(row: Row): TextRecord = {
+    DefSer.deserialize(row.getAs[Array[Byte]]("value")).asInstanceOf[TextRecord]
+  }
+
   def main(args: Array[String]): Unit = {
     Wiring.wxStream.run()
   }
+
 }
-
-
-/*
-import ss.implicits._
-import org.apache.spark.sql.functions._
-
-val enc: Encoder[TextRecord] = Encoders.product[TextRecord]
-
-  val memStore = records
-    .writeStream
-    .queryName(name(stationId, buoyData = feedType, None))
-    .outputMode("append")
-    .start()
-  memStore.awaitTermination()
-val timestamped = records
-  .withColumn("ts_long", unix_timestamp($"eventTime"))
-  */
