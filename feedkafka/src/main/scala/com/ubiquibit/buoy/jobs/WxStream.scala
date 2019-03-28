@@ -8,9 +8,7 @@ import com.ubiquibit.buoy._
 import com.ubiquibit.buoy.serialize.DefSer
 import org.apache.spark.SparkContext
 import org.apache.spark.sql._
-import org.apache.spark.sql.catalyst.expressions.Minute
-import org.apache.spark.sql.expressions.scalalang.typed
-//import org.apache.spark.sql.expressions.Window
+import org.apache.spark.sql.streaming.GroupStateTimeout
 import org.apache.spark.sql.types.{StringType, StructField, StructType}
 
 case class StationFeed(stationId: String, feedType: String)
@@ -62,24 +60,20 @@ class WxStream(env: {
       .option("spark.sql.shuffle.partitions", conf.getString("spark.partitions"))
       .load()
 
-    val recordStream = kafkaFeed
+    import StationInterrupts._
+
+    val interruptStream = kafkaFeed
       .map(deserialize)
-      .withWatermark("eventTime", "12 hours")
-      .groupBy(window($"eventTime", "1 hour", "15 minutes"), 'stationId, 'eventTime)
-      .agg('eventTime)
-
-    recordStream.printSchema()
-
-    // (Flat)MapGroupsWithState
-
-    val debugOut = recordStream
+      .groupByKey(_.stationId)
+      .mapGroupsWithState(GroupStateTimeout.NoTimeout)(updateAcrossEvents)
       .writeStream
-      .format("console")
-      .option("truncate", "false")
-      .outputMode("append")
+      .queryName("interrupts")
+//      .format("console")
+      .format("memory")
+      .outputMode("update")
       .start
 
-    debugOut.awaitTermination()
+    interruptStream.awaitTermination()
 
   }
 

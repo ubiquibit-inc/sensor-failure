@@ -5,7 +5,8 @@ import com.ubiquibit.buoy._
 import com.ubiquibit.buoy.jobs.setup.{InitRedis, InitRedisImpl}
 import org.scalatest.{BeforeAndAfter, FunSpec}
 
-class InitRedisSpec
+class
+InitRedisSpec
   extends FunSpec
     with BeforeAndAfter {
 
