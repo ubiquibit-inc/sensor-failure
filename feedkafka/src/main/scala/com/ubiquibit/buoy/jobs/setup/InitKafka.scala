@@ -45,6 +45,7 @@ class InitKafkaImpl(env: {
 
   def run(): Unit = {
 
+    /*
     val candidates: Seq[(StationId, WxFeed)] =
       repo
         .readStations()
@@ -58,9 +59,9 @@ class InitKafkaImpl(env: {
     Log.info(s"Found ${candidates.size} candidate stations.")
 
     randomElemOf(candidates).foreach(t => { // there's really (at most?) one
-
-      val stationId = t._1
-      val buoyData = t._2
+*/
+      val stationId = StationId.makeStationId("NPXN6")
+      val buoyData = Text
       Log.fine(s"Proceeding with $stationId's $buoyData file.")
 
       repo.updateImportStatus(stationId, buoyData, KAFKALOADING)
@@ -90,9 +91,9 @@ class InitKafkaImpl(env: {
 
       repo.updateImportStatus(stationId, buoyData, KAFKALOADED)
 
-    })
+    }//)
 
-  }
+//  }
 
 }
 

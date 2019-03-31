@@ -14,9 +14,60 @@ import scala.collection.mutable.ArrayBuffer
   */
 case class StationInterrupts(var stationId: String, var lastRecord: TextRecord, var interrupts: Set[String])
 
+case class StationInterruptsForFlatMap(var stationId: String, var records: Records, var interrupts: Set[String])
+
 object StationInterrupts {
 
-  def updateInterruptsWithEvent(state: StationInterrupts, input: TextRecord): StationInterrupts = {
+  /**
+    * Costs an iteration through the records to ensure that the caller has split the call across stationIds.
+    * IF NOT, then incorrect computation will result.
+    */
+  private val sanityCheck = true
+  private val numRecords = 16
+
+  def defaultInterruptsForFlatMap(stationId: String, records: Records): StationInterruptsForFlatMap = StationInterruptsForFlatMap(stationId, records, Set())
+
+  def updateInterruptsForFlatMap(stationId: String,
+                                 recordsPerStation: Iterator[TextRecord],
+                                 state: GroupState[StationInterruptsForFlatMap]): Iterator[StationInterruptsForFlatMap] = {
+
+    if (state.hasTimedOut) {
+      val existing = state.get
+      state.remove()
+      existing.copy(records = new Records(numRecords), interrupts = Set()) // release old pointers...
+      return Iterator()
+    }
+
+    val values = recordsPerStation.toList
+    if (sanityCheck) assert(values.forall(_.stationId == stationId))
+    val initialState: StationInterruptsForFlatMap = defaultInterruptsForFlatMap(stationId, new Records(numRecords))
+    val newState: StationInterruptsForFlatMap = state.getOption.getOrElse(initialState) // records.size == 0
+
+    println(s"StationId: $stationId")
+    println(s"Records: ${values.size}")
+    values.zipWithIndex.foreach { case (v, idx) => println(s"$idx: $v") }
+    println(s"State: $state")
+
+    for (tr <- values) newState.records.push(tr)
+
+    if (newState.records.size > 1) {
+      val seq = newState.records.recents()
+      val newer = seq.head
+      val older = seq(1)
+      val current = newState.interrupts
+      newState.interrupts = current ++ interrupts(older, newer) -- onlineAgain(older, newer)
+    }
+    // records.size == 1
+    else {
+      newState.interrupts = Set()
+    }
+
+    state.update(newState)
+    Iterator(newState)
+
+  }
+
+  def updateInterrupts(state: StationInterrupts, input: TextRecord): StationInterrupts = {
 
     // in-order - input AFTER state
     if (!input.eventTime.before(state.lastRecord.eventTime)) {
@@ -35,26 +86,23 @@ object StationInterrupts {
 
 
   private val year1969 = new Timestamp(6284160L) // 1969-12-31 19:44:44.16
-  private val year2169 = new Timestamp(6284160000000L) // 2169-02-19 02:00:00.0
-  private val defaultRecord = TextRecord(year1969, -1, "", Float.NaN, Float.NaN, Float.NaN, Float.NaN,Float.NaN, Float.NaN,Float.NaN, Float.NaN,Float.NaN, Float.NaN,Float.NaN, Float.NaN,Float.NaN, Float.NaN)
+  //  private val year2169 = new Timestamp(6284160000000L) // 2169-02-19 02:00:00.0
+  private val defaultRecord = TextRecord(year1969, -1, "", Float.NaN, Float.NaN, Float.NaN, Float.NaN, Float.NaN, Float.NaN, Float.NaN, Float.NaN, Float.NaN, Float.NaN, Float.NaN, Float.NaN, Float.NaN, Float.NaN)
 
   val defaultState: StationInterrupts = StationInterrupts(
     stationId = "",
     lastRecord = defaultRecord,
     interrupts = Set[String]()
-//    ,
-//    start = year1969,
-//    end = year1969
   )
 
   def updateAcrossEvents(stationId: String,
                          inputs: Iterator[TextRecord],
                          oldState: GroupState[StationInterrupts]): StationInterrupts = {
 
-    var state: StationInterrupts = if( oldState.exists ) oldState.get else defaultState
+    var state: StationInterrupts = if (oldState.exists) oldState.get else defaultState
 
-    for( input <- inputs ){
-      state = updateInterruptsWithEvent(state, input)
+    for (input <- inputs) {
+      state = updateInterrupts(state, input)
       oldState.update(state)
     }
 
@@ -114,11 +162,6 @@ object StationInterrupts {
     if (currentRecord.waterSurfaceTemp.isNaN && !previousRecord.waterSurfaceTemp.isNaN) addOne("waterSurfaceTemp")
 
     result.toSet
-  }
-
-  def main(args:Array[String]): Unit = {
-    println("start: " + year1969)
-    println("end: " + year2169)
   }
 
 }

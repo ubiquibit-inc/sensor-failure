@@ -8,7 +8,7 @@ import com.ubiquibit.buoy._
 import com.ubiquibit.buoy.serialize.DefSer
 import org.apache.spark.SparkContext
 import org.apache.spark.sql._
-import org.apache.spark.sql.streaming.GroupStateTimeout
+import org.apache.spark.sql.streaming.{GroupState, GroupStateTimeout, OutputMode}
 import org.apache.spark.sql.types.{StringType, StructField, StructType}
 
 case class StationFeed(stationId: String, feedType: String)
@@ -68,8 +68,8 @@ class WxStream(env: {
       .mapGroupsWithState(GroupStateTimeout.NoTimeout)(updateAcrossEvents)
       .writeStream
       .queryName("interrupts")
-//      .format("console")
-      .format("memory")
+      .format("console")
+      //      .format("memory")
       .outputMode("update")
       .start
 

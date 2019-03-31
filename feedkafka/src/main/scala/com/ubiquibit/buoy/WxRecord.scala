@@ -2,7 +2,7 @@ package com.ubiquibit.buoy
 
 import java.sql.Timestamp
 
-import com.ubiquibit.buoy.serialize.{DefSer}
+import com.ubiquibit.buoy.serialize.DefSer
 
 
 sealed abstract class WxRecord(eventTime: Timestamp, lineLength: Int, stationId: String) extends Serializable {
