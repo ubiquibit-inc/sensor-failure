@@ -124,8 +124,8 @@ class TextParserSpec extends SparkSpec with BeforeAndAfter {
 
       val firstThree = ds.take(3)
       assert(firstThree(0).lineLength === 77)
-      assert(firstThree(1).lineLength === 76)
-      assert(firstThree(2).lineLength === 76)
+      assert(firstThree(1).lineLength === 75)
+      assert(firstThree(2).lineLength === 75)
 
     }
 
