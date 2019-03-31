@@ -77,7 +77,7 @@ class WxStream(env: {
 
     val interruptedOutput = interruptScanner
       .filter(si => si.interrupts.nonEmpty )
-      .withColumn("interrupted", lit("UNINTERRUPTED"))
+      .withColumn("interrupted", lit("INTERRUPTED"))
       .writeStream
       .format("console")
       .option("truncate", "false")
@@ -87,7 +87,7 @@ class WxStream(env: {
 
     val nonInterruptedOutput = interruptScanner
       .filter(si => si.interrupts.isEmpty )
-      .withColumn("uninterrupted", lit("INTERRUPTED"))
+      .withColumn("uninterrupted", lit("UNINTERRUPTED"))
       .writeStream
       .format("console")
       .option("truncate", "false")
@@ -95,17 +95,17 @@ class WxStream(env: {
       .outputMode(OutputMode.Append)
       .start
 
-    val allOutput = interruptScanner
-      .writeStream
-      .format("console")
-      .option("truncate", false)
-      .trigger(Trigger.ProcessingTime(16.seconds))
-      .outputMode(OutputMode.Append)
-      .start
+//    val allOutput = interruptScanner
+//      .writeStream
+//      .format("console")
+//      .option("truncate", false)
+//      .trigger(Trigger.ProcessingTime(128.seconds))
+//      .outputMode(OutputMode.Append)
+//      .start
 
     interruptedOutput.awaitTermination()
     nonInterruptedOutput.awaitTermination()
-    allOutput.awaitTermination()
+//    allOutput.awaitTermination()
 
   }
 
