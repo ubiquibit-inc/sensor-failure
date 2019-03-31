@@ -1,4 +1,4 @@
-package com.ubiquibit.buoy.jobs.setup
+package com.ubiquibit.buoy.jobs.util
 
 import java.io.{BufferedWriter, File, FileWriter}
 

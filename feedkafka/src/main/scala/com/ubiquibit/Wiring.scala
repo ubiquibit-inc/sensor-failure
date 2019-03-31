@@ -2,6 +2,7 @@ package com.ubiquibit
 
 import com.ubiquibit.buoy.jobs._
 import com.ubiquibit.buoy.jobs.setup._
+import com.ubiquibit.buoy.jobs.util.{StageFeeds, WriteInterruptRecord}
 import com.ubiquibit.buoy.{FileReckoning, FileReckoningImpl, StationRepository, StationRepositoryImpl}
 
 /**
@@ -24,6 +25,8 @@ object Wiring {
   lazy val initRedis: InitRedis = new InitRedisImpl(this)
   lazy val updateLastWxReport: CalculateLastWxReport = new CalculateLastWxReport(this)
   lazy val stageFromRedis: StageFeeds = new StageFeeds(this)
-  lazy val wxStream: WxStream  = new WxStream(this)
+  lazy val wxStream: WxStream = new WxStream(this)
+
+  lazy val writeInterruptRecord: WriteInterruptRecord = new WriteInterruptRecord(this)
 
 }

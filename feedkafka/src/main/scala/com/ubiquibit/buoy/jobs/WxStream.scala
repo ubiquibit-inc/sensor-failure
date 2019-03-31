@@ -60,7 +60,7 @@ class WxStream(env: {
       .option("spark.sql.shuffle.partitions", conf.getString("spark.partitions"))
       .load()
 
-    kafkaFeed.printSchema()
+//    kafkaFeed.printSchema()
 
     import StationInterrupts._
     import scala.concurrent.duration._
@@ -80,11 +80,22 @@ class WxStream(env: {
       .writeStream
       .format("console")
       .option("truncate", "false")
-      .trigger(Trigger.ProcessingTime(1.second))
+      .trigger(Trigger.ProcessingTime(8.second))
       .outputMode(OutputMode.Append)
       .start
 
     sq2.awaitTermination()
+
+    val sq3 = interruptScanner
+      .filter(si => si.interrupts.isEmpty )
+      .writeStream
+      .format("console")
+      .option("truncate", "false")
+      .trigger(Trigger.ProcessingTime(8.second))
+      .outputMode(OutputMode.Append)
+      .start
+
+    sq3.awaitTermination()
 
     val sq = interruptScanner
       .writeStream

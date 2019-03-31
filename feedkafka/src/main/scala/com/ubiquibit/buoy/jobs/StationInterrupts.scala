@@ -43,23 +43,22 @@ object StationInterrupts {
     val newState: StationInterruptsForFlatMap = state.getOption.getOrElse(initialState) // records.size == 0
 
     println(s"StationId: $stationId")
-    println(s"Records: ${values.size}")
-    values.zipWithIndex.foreach { case (v, idx) => println(s"$idx: $v") }
-    println(s"State: $state")
+    println(s"Input records: ${values.size}")
 
     for (tr <- values) newState.records :+ tr
-    val recs = newState.records
-
     def ascendingSort[T](xs: ArrayBuffer[T])(implicit ev$1: T => Ordered[T]) = xs.sortWith(_ < _)
-    ascendingSort(newState.records)
+    newState.records = ascendingSort(newState.records)
+    if (newState.records.size > numRecords)
+      newState.records = newState.records.dropRight(newState.records.size - numRecords)
+
+    newState.records.zipWithIndex.foreach { case (v, idx) => println(s"$idx: $v") }
 
     def recents(): Seq[TextRecord] = {
-      val recs = newState.records
-      if (recs.size > 1) {
-        Seq(recs.last, recs.toList(recs.size - 2))
+      if (newState.records.size > 1) {
+        Seq(newState.records.last, newState.records.toList(newState.records.size - 2))
       }
-      else if (recs.size == 1) {
-        Seq(recs.last)
+      else if (newState.records.size == 1) {
+        Seq(newState.records.last)
       }
       else {
         Seq()
@@ -77,6 +76,8 @@ object StationInterrupts {
     else {
       newState.interrupts = Set()
     }
+
+    newState.interrupts.zipWithIndex.foreach { case (v, idx) => println(s"$idx: $v") }
 
     state.update(newState)
     Iterator(newState)
