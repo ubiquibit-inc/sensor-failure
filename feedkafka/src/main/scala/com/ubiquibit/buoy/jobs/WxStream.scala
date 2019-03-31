@@ -75,8 +75,9 @@ class WxStream(env: {
       outputMode = OutputMode.Append,
       timeoutConf = GroupStateTimeout.NoTimeout)(func = updateInterruptsForFlatMap)
 
-    val sq2 = interruptScanner
+    val interruptedOutput = interruptScanner
       .filter(si => si.interrupts.nonEmpty )
+      .withColumn("interrupted", lit("UNINTERRUPTED"))
       .writeStream
       .format("console")
       .option("truncate", "false")
@@ -84,10 +85,9 @@ class WxStream(env: {
       .outputMode(OutputMode.Append)
       .start
 
-    sq2.awaitTermination()
-
-    val sq3 = interruptScanner
+    val nonInterruptedOutput = interruptScanner
       .filter(si => si.interrupts.isEmpty )
+      .withColumn("uninterrupted", lit("INTERRUPTED"))
       .writeStream
       .format("console")
       .option("truncate", "false")
@@ -95,9 +95,7 @@ class WxStream(env: {
       .outputMode(OutputMode.Append)
       .start
 
-    sq3.awaitTermination()
-
-    val sq = interruptScanner
+    val allOutput = interruptScanner
       .writeStream
       .format("console")
       .option("truncate", false)
@@ -105,7 +103,9 @@ class WxStream(env: {
       .outputMode(OutputMode.Append)
       .start
 
-    sq.awaitTermination()
+    interruptedOutput.awaitTermination()
+    nonInterruptedOutput.awaitTermination()
+    allOutput.awaitTermination()
 
   }
 
