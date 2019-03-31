@@ -80,7 +80,7 @@ Keep track of the Station ID that the App chooses by looking at stdout
 
 #### Init WxStream
 
-- run [StageFeedsFromRedis](src/main/scala/com/ubiquibit/buoy/jobs/setup/StageFeedsFromRedis.scala)
+- run [StageFeedsFromRedis](src/main/scala/com/ubiquibit/buoy/jobs/util/StageFeeds.scala)
 
 > It writes a file to the staging directory that will later be used by [WxStream](src/main/scala/com/ubiquibit/buoy/jobs/WxStream.scala)
 
