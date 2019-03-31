@@ -53,7 +53,28 @@ cd bash
 
 - run [InitKafkaImpl](src/main/scala/com/ubiquibit/buoy/jobs/setup/InitKafka.scala) 
 
-> Load one data feed per run from filesystem - recommend 3-4 runs for simple setup.
+> It loads one (text) data feed per run from filesystem - recommend 3-4 runs for simple setup.
+
+```bash
+
+# before
+
+redis:6379> hmget "stationId:46082" "TXT"
+1) "DOWNLOADED"
+
+# Loads hard-coded Station 46082...
+
+./bin/spark-submit --class "com.ubiquibit.buoy.jobs.setup.InitKafkaImpl" --master "spark://Flob.local:7077" --deploy-mode cluster --executor-cores 4 --packages "org.apache.spark:spark-sql-kafka-0-10_2.11:2.4.0" "/Users/jason/scratch/sensor-failure/feedkafka/target/scala-2.11/feedkafka-assembly-1.0.jar"
+
+# OR loads a station of your choosing...
+
+./bin/spark-submit --class "com.ubiquibit.buoy.jobs.setup.InitKafkaImpl" --master "spark://Flob.local:7077" --deploy-mode cluster --executor-cores 4 --packages "org.apache.spark:spark-sql-kafka-0-10_2.11:2.4.0" "/Users/jason/scratch/sensor-failure/feedkafka/target/scala-2.11/feedkafka-assembly-1.0.jar" "BZST2"
+
+# verify by checking in Redis:
+
+redis:6379> hmget "stationId:46082" "TXT"
+1) "KAFKALOADED"
+```
 
 Keep track of the Station ID that the App chooses by looking at stdout
 
@@ -61,8 +82,15 @@ Keep track of the Station ID that the App chooses by looking at stdout
 
 - run [StageFeedsFromRedis](src/main/scala/com/ubiquibit/buoy/jobs/setup/StageFeedsFromRedis.scala)
 
-> Writes a file to the staging directory 
+> It writes a file to the staging directory that will later be used by [WxStream](src/main/scala/com/ubiquibit/buoy/jobs/WxStream.scala)
 
+#### Run WxStream
+
+```bash
+/bin/spark-submit --class "com.ubiquibit.buoy.jobs.WxStream" --master "spark://Flob.local:7077" --deploy-mode cluster --executor-cores 4 --packages "org.apache.spark:spark-sql-kafka-0-10_2.11:2.4.0" "/Users/jason/scratch/sensor-failure/feedkafka/target/scala-2.11/feedkafka-assembly-1.0.jar"
+``` 
+
+> check the driver's stdout log and [SparkUI](http://localhost:8080)
    
 
 

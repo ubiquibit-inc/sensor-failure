@@ -8,7 +8,7 @@ import com.ubiquibit.buoy._
 import com.ubiquibit.buoy.serialize.DefSer
 import org.apache.spark.SparkContext
 import org.apache.spark.sql._
-import org.apache.spark.sql.streaming.{GroupState, GroupStateTimeout, OutputMode}
+import org.apache.spark.sql.streaming._
 import org.apache.spark.sql.types.{StringType, StructField, StructType}
 
 case class StationFeed(stationId: String, feedType: String)
@@ -60,20 +60,41 @@ class WxStream(env: {
       .option("spark.sql.shuffle.partitions", conf.getString("spark.partitions"))
       .load()
 
-    import StationInterrupts._
+    kafkaFeed.printSchema()
 
-    val interruptStream = kafkaFeed
+    import StationInterrupts._
+    import scala.concurrent.duration._
+
+    val enc2: Encoder[StationInterruptsForFlatMap] = Encoders.product[StationInterruptsForFlatMap]
+
+    val recordsByStationId = kafkaFeed
       .map(deserialize)
       .groupByKey(_.stationId)
-      .mapGroupsWithState(GroupStateTimeout.NoTimeout)(updateAcrossEvents)
+
+    val interruptScanner = recordsByStationId.flatMapGroupsWithState(
+      outputMode = OutputMode.Append,
+      timeoutConf = GroupStateTimeout.NoTimeout)(func = updateInterruptsForFlatMap)
+
+    val sq2 = interruptScanner
+      .filter(si => si.interrupts.nonEmpty )
       .writeStream
-      .queryName("interrupts")
       .format("console")
-      //      .format("memory")
-      .outputMode("update")
+      .option("truncate", "false")
+      .trigger(Trigger.ProcessingTime(1.second))
+      .outputMode(OutputMode.Append)
       .start
 
-    interruptStream.awaitTermination()
+    sq2.awaitTermination()
+
+    val sq = interruptScanner
+      .writeStream
+      .format("console")
+      .option("truncate", false)
+      .trigger(Trigger.ProcessingTime(16.seconds))
+      .outputMode(OutputMode.Append)
+      .start
+
+    sq.awaitTermination()
 
   }
 

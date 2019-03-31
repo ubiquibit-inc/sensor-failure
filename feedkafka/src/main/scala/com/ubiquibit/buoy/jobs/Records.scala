@@ -11,7 +11,7 @@ import scala.collection.mutable
   *
   * @param maxSize capacity - records older than this will be dumped
   */
-class Records(maxSize: Int) {
+class Records(maxSize: Int) extends Serializable {
 
   implicit def timestampOrdering: Ordering[Timestamp] = Ordering.fromLessThan(_ after _)
 

@@ -4,7 +4,6 @@ import java.sql.Timestamp
 
 import com.ubiquibit.buoy.TextRecord
 import org.apache.spark.sql.streaming.GroupState
-
 import scala.collection.mutable.ArrayBuffer
 
 /**
@@ -14,7 +13,7 @@ import scala.collection.mutable.ArrayBuffer
   */
 case class StationInterrupts(var stationId: String, var lastRecord: TextRecord, var interrupts: Set[String])
 
-case class StationInterruptsForFlatMap(var stationId: String, var records: Records, var interrupts: Set[String])
+case class StationInterruptsForFlatMap(var stationId: String, var records: ArrayBuffer[TextRecord], var interrupts: Set[String])
 
 object StationInterrupts {
 
@@ -25,7 +24,7 @@ object StationInterrupts {
   private val sanityCheck = true
   private val numRecords = 16
 
-  def defaultInterruptsForFlatMap(stationId: String, records: Records): StationInterruptsForFlatMap = StationInterruptsForFlatMap(stationId, records, Set())
+  def defaultInterruptsForFlatMap(stationId: String, records: ArrayBuffer[TextRecord]): StationInterruptsForFlatMap = StationInterruptsForFlatMap(stationId, records, Set())
 
   def updateInterruptsForFlatMap(stationId: String,
                                  recordsPerStation: Iterator[TextRecord],
@@ -34,13 +33,13 @@ object StationInterrupts {
     if (state.hasTimedOut) {
       val existing = state.get
       state.remove()
-      existing.copy(records = new Records(numRecords), interrupts = Set()) // release old pointers...
+      existing.copy(records = new ArrayBuffer, interrupts = Set()) // release old pointers...
       return Iterator()
     }
 
     val values = recordsPerStation.toList
     if (sanityCheck) assert(values.forall(_.stationId == stationId))
-    val initialState: StationInterruptsForFlatMap = defaultInterruptsForFlatMap(stationId, new Records(numRecords))
+    val initialState: StationInterruptsForFlatMap = defaultInterruptsForFlatMap(stationId, new ArrayBuffer)
     val newState: StationInterruptsForFlatMap = state.getOption.getOrElse(initialState) // records.size == 0
 
     println(s"StationId: $stationId")
@@ -48,10 +47,27 @@ object StationInterrupts {
     values.zipWithIndex.foreach { case (v, idx) => println(s"$idx: $v") }
     println(s"State: $state")
 
-    for (tr <- values) newState.records.push(tr)
+    for (tr <- values) newState.records :+ tr
+    val recs = newState.records
+
+    def ascendingSort[T](xs: ArrayBuffer[T])(implicit ev$1: T => Ordered[T]) = xs.sortWith(_ < _)
+    ascendingSort(newState.records)
+
+    def recents(): Seq[TextRecord] = {
+      val recs = newState.records
+      if (recs.size > 1) {
+        Seq(recs.last, recs.toList(recs.size - 2))
+      }
+      else if (recs.size == 1) {
+        Seq(recs.last)
+      }
+      else {
+        Seq()
+      }
+    }
 
     if (newState.records.size > 1) {
-      val seq = newState.records.recents()
+      val seq = recents()
       val newer = seq.head
       val older = seq(1)
       val current = newState.interrupts

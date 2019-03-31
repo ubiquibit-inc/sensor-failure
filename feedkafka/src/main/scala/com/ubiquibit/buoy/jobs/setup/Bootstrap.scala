@@ -16,7 +16,7 @@ object Bootstrap {
 
   def main(args: Array[String]): Unit = {
     Wiring.initRedis.run()
-    Wiring.initKafka.run()
+    Wiring.initKafka.run(None)
   }
 
 }

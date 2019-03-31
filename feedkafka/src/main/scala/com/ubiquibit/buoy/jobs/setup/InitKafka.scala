@@ -21,7 +21,7 @@ import org.apache.spark.sql.SparkSession
   */
 trait InitKafka {
 
-  def run(): Unit
+  def run(stationId: Option[String]): Unit
 
 }
 
@@ -43,7 +43,7 @@ class InitKafkaImpl(env: {
     si.feeds.exists(_._2 == DOWNLOADED)
   }
 
-  def run(): Unit = {
+  def run(arg: Option[String]): Unit = {
 
     /*
     val candidates: Seq[(StationId, WxFeed)] =
@@ -60,7 +60,9 @@ class InitKafkaImpl(env: {
 
     randomElemOf(candidates).foreach(t => { // there's really (at most?) one
 */
-      val stationId = StationId.makeStationId("NPXN6")
+
+
+      val stationId = StationId.makeStationId(arg.getOrElse("46082"))
       val buoyData = Text
       Log.fine(s"Proceeding with $stationId's $buoyData file.")
 
@@ -100,7 +102,10 @@ class InitKafkaImpl(env: {
 object InitKafkaImpl {
 
   def main(args: Array[String]): Unit = {
-    Wiring.initKafka.run()
+    if( args.isEmpty) Wiring.initKafka.run(None)
+    else{
+      Wiring.initKafka.run(Some(args(0)))
+    }
   }
 
 }
