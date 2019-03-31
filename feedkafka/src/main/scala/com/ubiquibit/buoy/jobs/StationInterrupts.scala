@@ -42,18 +42,29 @@ object StationInterrupts {
     val initialState: StationInterruptsForFlatMap = defaultInterruptsForFlatMap(stationId, new ArrayBuffer)
     val newState: StationInterruptsForFlatMap = state.getOption.getOrElse(initialState) // records.size == 0
 
-    println(s"StationId: $stationId")
-    println(s"Input records: ${values.size}")
+    println(s"StationId: [$stationId]")
+    println(s"[$stationId] input records: ${values.size}")
 
     for (tr <- values) newState.records :+ tr
-    def ascendingSort[T](xs: ArrayBuffer[T])(implicit ev$1: T => Ordered[T]) = xs.sortWith(_ < _)
-    newState.records = ascendingSort(newState.records)
+
+    def sortRecords(rec0: TextRecord, rec1: TextRecord): Boolean = {
+      rec0.eventTime after rec1.eventTime
+    }
+
+    println(s"First record before sort: ${newState.records.headOption}")
+    newState.records = (newState.records ++ values).sortWith(sortRecords)
+    println(s"First record after sort: ${newState.records.headOption}")
+
+    println(s"records size before dropRight: ${newState.records.size}")
     if (newState.records.size > numRecords)
       newState.records = newState.records.dropRight(newState.records.size - numRecords)
+    println(s"records size after dropRight: ${newState.records.size}")
 
+    println(s"Printing [$stationId] records soon...")
     newState.records.zipWithIndex.foreach { case (v, idx) => println(s"$idx: $v") }
+    println(s"Printed [$stationId] records.")
 
-    def recents(): Seq[TextRecord] = {
+    def recentRecs(): Seq[TextRecord] = {
       if (newState.records.size > 1) {
         Seq(newState.records.last, newState.records.toList(newState.records.size - 2))
       }
@@ -66,7 +77,8 @@ object StationInterrupts {
     }
 
     if (newState.records.size > 1) {
-      val seq = recents()
+      println(s"More than 1 [$stationId] newState record")
+      val seq = recentRecs()
       val newer = seq.head
       val older = seq(1)
       val current = newState.interrupts
@@ -74,10 +86,13 @@ object StationInterrupts {
     }
     // records.size == 1
     else {
+      println(s"Just 1 [$stationId] newState record")
       newState.interrupts = Set()
     }
 
+    println(s"Printing [$stationId] interrupts soon...")
     newState.interrupts.zipWithIndex.foreach { case (v, idx) => println(s"$idx: $v") }
+    println(s"Printed [$stationId] interrupts.")
 
     state.update(newState)
     Iterator(newState)

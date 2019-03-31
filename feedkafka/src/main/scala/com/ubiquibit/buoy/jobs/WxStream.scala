@@ -39,7 +39,7 @@ class WxStream(env: {
     SparkSession.setActiveSession(ss)
 
     val topics = ss.read
-      .option("header", false)
+      .option("header", value = false)
       .schema(schema = stationFeedSchema)
       .csv(path = conf.getString("stage.dir"))
       .as(enc)
@@ -60,7 +60,7 @@ class WxStream(env: {
       .option("spark.sql.shuffle.partitions", conf.getString("spark.partitions"))
       .load()
 
-//    kafkaFeed.printSchema()
+    //    kafkaFeed.printSchema()
 
     import StationInterrupts._
     import scala.concurrent.duration._
@@ -76,7 +76,7 @@ class WxStream(env: {
       timeoutConf = GroupStateTimeout.NoTimeout)(func = updateInterruptsForFlatMap)
 
     val interruptedOutput = interruptScanner
-      .filter(si => si.interrupts.nonEmpty )
+      .filter(si => si.interrupts.nonEmpty)
       .withColumn("interrupted", lit("INTERRUPTED"))
       .writeStream
       .format("console")
@@ -86,7 +86,7 @@ class WxStream(env: {
       .start
 
     val nonInterruptedOutput = interruptScanner
-      .filter(si => si.interrupts.isEmpty )
+      .filter(si => si.interrupts.isEmpty)
       .withColumn("uninterrupted", lit("UNINTERRUPTED"))
       .writeStream
       .format("console")
@@ -95,17 +95,17 @@ class WxStream(env: {
       .outputMode(OutputMode.Append)
       .start
 
-//    val allOutput = interruptScanner
-//      .writeStream
-//      .format("console")
-//      .option("truncate", false)
-//      .trigger(Trigger.ProcessingTime(128.seconds))
-//      .outputMode(OutputMode.Append)
-//      .start
+    //    val allOutput = interruptScanner
+    //      .writeStream
+    //      .format("console")
+    //      .option("truncate", false)
+    //      .trigger(Trigger.ProcessingTime(128.seconds))
+    //      .outputMode(OutputMode.Append)
+    //      .start
 
     interruptedOutput.awaitTermination()
     nonInterruptedOutput.awaitTermination()
-//    allOutput.awaitTermination()
+    //    allOutput.awaitTermination()
 
   }
 
@@ -121,8 +121,8 @@ object WxStream extends TopicNamer {
   }
 
   val stationFeedSchema: StructType = StructType(
-    StructField("stationId", StringType, false) ::
-      StructField("feedType", StringType, false) :: Nil
+    StructField("stationId", StringType, nullable = false) ::
+      StructField("feedType", StringType, nullable = false) :: Nil
   )
 
   def deserialize(row: Row): TextRecord = {

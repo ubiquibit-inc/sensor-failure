@@ -13,9 +13,4 @@ sealed abstract class WxRecord(eventTime: Timestamp, lineLength: Int, stationId:
 
 case class TextRecord(eventTime: Timestamp, lineLength: Int, stationId: String, windDirection: Float, windSpeed: Float, gustSpeed: Float
                       , waveHeight: Float, dominantWavePeriod: Float, averageWavePeriod: Float, mWaveDirection: Float, seaLevelPressure: Float
-                      , airTemp: Float, waterSurfaceTemp: Float, dewPointTemp: Float, visibility: Float, pressureTendency: Float, tide: Float) extends WxRecord(eventTime, lineLength, stationId) with Ordered[TextRecord]{
-//  implicit def timestampOrdering: Ordering[Timestamp] = Ordering.fromLessThan(_ after _)
-  override def compare(that: TextRecord): Int = {
-    (this.eventTime.getTime - that.eventTime.getTime).toInt
-  }
-}
+                      , airTemp: Float, waterSurfaceTemp: Float, dewPointTemp: Float, visibility: Float, pressureTendency: Float, tide: Float) extends WxRecord(eventTime, lineLength, stationId)

@@ -41,7 +41,7 @@ class FileReckoningImpl extends FileReckoning with SupportedFeeds {
   private val filenameSupported: (String) => Boolean = { absolutePath => supported.exists(_.same(new File(absolutePath))) }
 
   def getFile(stationId: StationId, ofType: WxFeed): Option[File] = {
-    if (!feeds.exists(_._1 == stationId)) None
+    if (!feeds().exists(_._1 == stationId)) None
     val expectedName = s"${stationId.toString}.${ofType.ext}".toUpperCase
     supportedFiles.find {
       _.getName.equalsIgnoreCase(expectedName)
