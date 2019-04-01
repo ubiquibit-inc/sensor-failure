@@ -45,8 +45,7 @@ object StationInterrupts {
     val initialState: StationInterruptsForFlatMap = defaultInterruptsForFlatMap(stationId, new ArrayBuffer)
     val newState: StationInterruptsForFlatMap = state.getOption.getOrElse(initialState) // records.size == 0
 
-    Log.info(s"StationId: [$stationId]")
-    Log.info(s"[$stationId] input records: ${values.size}")
+    Log.info(s"${values.size} input records : [$stationId]")
 
     for (tr <- values) newState.records :+ tr
 
@@ -80,7 +79,7 @@ object StationInterrupts {
      */
     if (newState.records.size > 1) {
 
-      Log.info(s"More than 1 [$stationId] newState record")
+      Log.finest(s"More than 1 [$stationId] newState record")
 
       val current = newState.interrupts
 
@@ -88,26 +87,34 @@ object StationInterrupts {
         .sliding(2)
         .map { case ArrayBuffer(a: TextRecord, b: TextRecord) => interrupts(a, b) }
         .foldLeft(Set[String]())((r, c) => r.union(c))
-      Log.info(s"${off.size} interrupts made it through foldLeft.")
+
+      val offSz = off.size
+      if( offSz > 0 ) Log.info(s"""$offSz channel(s) interrupted: [$stationId] = $off""")
 
       val on = newState.records
         .sliding(2)
         .map { case Seq(a: TextRecord, b: TextRecord) => onlineAgain(a, b) }
         .foldLeft(Set[String]())((r, c) => r.union(c))
-      Log.info(s"${on.size} online again events made it through foldLeft.")
+
+      val onSz = on.size
+      if( onSz > 0 ) Log.info(s"""$onSz channel(s) online again: [$stationId] = $on""")
+      if( onSz > 0 || offSz > 0 ) {
+        Log.info(s"current = $current")
+        Log.info(s"off -- on = ${off -- on}")
+      }
 
       newState.interrupts = current ++ off -- on
 
     }
     // records.size == 1
     else {
-      Log.info(s"Just 1 [$stationId] newState record")
+      Log.finest(s"Just 1 [$stationId] newState record")
       newState.interrupts = Set()
     }
 
-    Log.finer(s"Printing [$stationId] interrupts soon...")
-    newState.interrupts.zipWithIndex.foreach { case (v, idx) => Log.info(s"$idx: $v") }
-    Log.finer(s"Printed [$stationId] interrupts.")
+    Log.finest(s"Printing [$stationId] interrupts soon...")
+    newState.interrupts.zipWithIndex.foreach { case (v, idx) => Log.finer(s"$idx: $v") }
+    Log.finest(s"Printed [$stationId] interrupts.")
 
     state.update(newState)
     Iterator(newState)
@@ -162,7 +169,7 @@ object StationInterrupts {
 
     def addOne(str: String): Unit = {
       result += str
-      Log.info(s"Found $str as onlineAgain.")
+      Log.info(s"$str : online again - [${currentRecord.stationId}] @ ${currentRecord.eventTime}")
     }
 
     // TODO use Shapeless instead
@@ -181,7 +188,8 @@ object StationInterrupts {
     if (previousRecord.windSpeed.isNaN && !currentRecord.windSpeed.isNaN) addOne("windSpeed")
     if (previousRecord.waterSurfaceTemp.isNaN && !currentRecord.waterSurfaceTemp.isNaN) addOne("waterSurfaceTemp")
 
-    Log.info(s"Found ${result.size} online again.")
+    val sz = result.size
+    if( sz > 0 ) Log.info(s"$sz channel(s) online again : [${currentRecord.stationId}] @ ${currentRecord.eventTime}")
 
     result.toSet
 
@@ -193,7 +201,7 @@ object StationInterrupts {
 
     def addOne(str: String): Unit = {
       result += str
-      Log.info(s"Found $str as interrupt.")
+      Log.info(s"$str : interrupted - [${currentRecord.stationId}] @ ${currentRecord.eventTime}")
     }
 
     Log.finest(s"comparing $previousRecord to $currentRecord")
@@ -214,7 +222,8 @@ object StationInterrupts {
     if (currentRecord.windSpeed.isNaN && !previousRecord.windSpeed.isNaN) addOne("windSpeed")
     if (currentRecord.waterSurfaceTemp.isNaN && !previousRecord.waterSurfaceTemp.isNaN) addOne("waterSurfaceTemp")
 
-    Log.info(s"Found ${result.size} interrupts.")
+    val sz = result.size
+    if( sz > 0 ) Log.info(s"$sz channel(s) interrupted : [${currentRecord.stationId}] @ ${currentRecord.eventTime}")
 
     result.toSet
   }

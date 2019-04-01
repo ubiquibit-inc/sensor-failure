@@ -21,10 +21,30 @@ class WriteInterruptRecord(env: {
 
   def run(station: Option[String]): Unit = {
 
-    val stationId: StationId = StationId.makeStationId(station.getOrElse("BZST2"))
-    val interruptionCow: TextRecord = TextRecord(new Timestamp(System.currentTimeMillis()), 80, stationId.toString,
-      0F, 0F, 0F, 0F, 0F, 0F, 0F, 0F, 0F, waterSurfaceTemp = Float.NaN, 0F, 0F, 0F, 0F
-    )
+    val stationId: StationId = StationId.makeStationId(station.getOrElse("NPXN6"))
+
+    def notInterruptionCow(someValue: Option[Float]): TextRecord = {
+      val ptdy: Float = someValue.getOrElse(Float.NaN)
+      TextRecord(eventTime = new Timestamp(System.currentTimeMillis()),
+        lineLength = 80,
+        stationId = stationId.toString,
+        windDirection = 310F,
+        windSpeed = 6.2F,
+        gustSpeed = Float.NaN,
+        waveHeight = Float.NaN,
+        dominantWavePeriod = Float.NaN,
+        averageWavePeriod = Float.NaN,
+        mWaveDirection = Float.NaN,
+        seaLevelPressure = 1019.9F,
+        airTemp = -5F,
+        waterSurfaceTemp = Float.NaN,
+        dewPointTemp = -17F,
+        visibility = Float.NaN,
+        pressureTendency = ptdy,
+        tide = Float.NaN
+      )
+    }
+    val interruptionCow = notInterruptionCow(None)
 
     import ss.implicits._
 
