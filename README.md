@@ -1,16 +1,24 @@
 # sensor-failure
 
-Use Arbitrary Stateful Streaming to generate machine-learning sets from a publicly-available sensor network.
+Uses Spark's Arbitrary Stateful Streaming to generate machine-learning sets from NOAA's buoy network.
+
+Generates a trailing sequence of readings for each sensor interrupt. 
 
 #### Background
 
 [NOAA](https://www.noaa.gov/) manages a world-wide network of weather stations under auspices of the [National Data Buoy Center](https://www.ndbc.noaa.gov/). 
 
-Stations have multiple configurations. Sensor arrays are either land-based, moored, or floating. Data are transmitted via [GOES](https://en.wikipedia.org/wiki/Geostationary_Operational_Environmental_Satellite) or [Iridium](https://en.wikipedia.org/wiki/Iridium_satellite_constellation) satellite networks to a ground facility in Wallops Island, Virginia.
+Stations have multiple configurations:
+
+Sensor arrays are land-based, moored, or floating.
+
+![land based](img/iosn3_mini.jpg)
+![moored](img/image002.jpg)
+![floating](img/12m1.jpg)
 
 Stations support near-surface and underwater sensors and report at fixed intervals or continuously. 
 
-Feeds are aggregated hourly and published to a publicly-accessible web-share location. From [whence](https://www.ndbc.noaa.gov/data/realtime2/) we start.   
+Data are transmitted via [GOES](https://en.wikipedia.org/wiki/Geostationary_Operational_Environmental_Satellite) or [Iridium](https://en.wikipedia.org/wiki/Iridium_satellite_constellation) satellite networks to a ground facility in Wallops Island, Virginia. Feeds are aggregated hourly and published to a publicly-accessible web-share location.   
 
 #### Quickstart
 
