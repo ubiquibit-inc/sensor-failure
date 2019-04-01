@@ -91,6 +91,8 @@ Keep track of the Station ID that the App chooses by looking at stdout
 ``` 
 
 > check the driver's stdout log and [SparkUI](http://localhost:8080)
+
+Note: WxStream console output shows up in the *driver* stdout. StationInterrupt and other debug logging shows up in the *application* stderr (if configured in `$SPARK_HOME/conf/log4.properties`)
    
 
 
