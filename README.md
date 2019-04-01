@@ -2,9 +2,11 @@
 
 This project demonstrates how to use Spark's Arbitrary Stateful Streaming Engine to generate ML data from a publicly-available sensor network.
 
+You too can have a fully-operational buoy anomaly detector running on your workstation. Just follow along. 
+
 #### Background
 
-NOAA operates a world-wide network of weather stations under auspices of the [National Data Buoy Center](https://www.ndbc.noaa.gov/). 
+[NOAA](https://www.noaa.gov/) operates a world-wide network of weather stations under auspices of the [National Data Buoy Center](https://www.ndbc.noaa.gov/). 
 
 Reporting weather stations have multiple configurations. Sensor arrays are either land-based (C-man), moored, or floating. Weather reports are transmitted via [GOES](https://en.wikipedia.org/wiki/Geostationary_Operational_Environmental_Satellite) or [Iridium](https://en.wikipedia.org/wiki/Iridium_satellite_constellation) satellite networks to a ground facility in Wallops Island, Virginia.
 
