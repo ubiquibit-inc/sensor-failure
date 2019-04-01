@@ -18,10 +18,24 @@ case class StationInterrupts(var stationId: String, var lastRecord: TextRecord, 
 
 case class StationInterruptsForFlatMap(var stationId: String, var records: ArrayBuffer[TextRecord], var interrupts: Set[String])
 
+/**
+  * @param stationId event source
+  * @param records map from individual event to (channel interrupts, re-activation events) on that tick
+  */
 case class Interrupts(var stationId: String, var records: Map[TextRecord, (Set[String], Set[String])]) {
+
+  private val processRecordsCnt = StationInterrupts.numRecords
+  import StationInterrupts._
+
   def isInterrupted: Boolean = records.exists(_._2._1.nonEmpty)
 
   def isOnlineAgain: Boolean = records.exists(_._2._2.nonEmpty)
+
+  def inWindow(): Interrupts = {
+    val keepers = records.keys.toList.sortWith(sortRecords).dropRight(records.size - processRecordsCnt)
+    Interrupts(stationId, records.filterKeys(k=> keepers.contains(k)))
+  }
+
 }
 
 object StationInterrupts {
@@ -31,18 +45,20 @@ object StationInterrupts {
     * IF NOT, then incorrect computation will result.
     */
   private val sanityCheck = true
-  private val numRecords = 16
+
+  val numRecords = 16
+
   @transient private val Log: Logger = Logger.getLogger(getClass.getName)
 
   def updateInterrupts(stationId: String,
                        input: Iterator[TextRecord],
                        state: GroupState[Interrupts]): Iterator[Interrupts] = {
 
-    Log.info(s"updateInterrupts [$stationId]")
+    Log.fine(s"updateInterrupts [$stationId]")
 
     if (state.hasTimedOut) {
       Log.info(s"state timed out for $stationId")
-      Log.info(">>> SHORT CIRCUIT <<<")
+      Log.fine(">>> SHORT CIRCUIT <<<")
       val existing = state.get
       state.remove()
       existing.copy(stationId = "", records = Map())
@@ -53,52 +69,52 @@ object StationInterrupts {
     if (sanityCheck) assert(input.forall(_.stationId == stationId))
     val defaultState = Interrupts(stationId, Map())
     val newState: Interrupts = state.getOption.getOrElse(defaultState)
-    Log.info(s"newState: $newState")
+    Log.finer(s"newState: $newState")
 
-    Log.info(s">>> ${inputValues.size} input records : [$stationId] <<<")
+    Log.finer(s">>> ${inputValues.size} input records : [$stationId] <<<")
+
+    val processRecordsCnt = numRecords
+    val retainRecordsCnt = numRecords * 2 - 1
 
     // need two to tango...
     if (newState.records.isEmpty && inputValues.size == 1) {
-      Log.info(">>> values size = 1 <<<")
-      Log.info(">>> SHORT CIRCUIT <<<")
+      Log.finest(">>> values size = 1 <<<")
+      Log.finer(">>> SHORT CIRCUIT <<<")
       newState.stationId = stationId
       newState.records = Map(inputValues.head -> (Set[String](), Set[String]()))
       state.update(newState)
       return Iterator(newState)
     }
 
-    Log.info(">>> NO SHORT CIRCUIT <<<")
-
-    val processRecordsCnt = numRecords
-    val retainRecordsCnt = numRecords * 2 - 1
+    Log.finer(">>> NO SHORT CIRCUIT <<<")
 
     val sorted = (newState.records.keys ++ inputValues).toList.sortWith(sortRecords)
     // throw away arrivals outside of our retained records window
     val retained = sorted.dropRight(sorted.size - retainRecordsCnt)
     val right = {
       if (sorted.isEmpty) List()
-      else{
+      else {
         val allRight = sorted.slice(processRecordsCnt - 1, sorted.size)
         allRight.dropRight(allRight.size - retainRecordsCnt)
       }
     }
 
-    Log.info(s"Sizes >>> sorted [${sorted.size}] ~ retained [${retained.size}] ~ right [${right.size}]")
+    Log.finer(s"Sizes >>> sorted [${sorted.size}] ~ retained [${retained.size}] ~ right [${right.size}]")
 
     val procBuffer: mutable.Buffer[TextRecord] = mutable.Buffer[TextRecord]()
     procBuffer ++= retained.dropRight(retained.size - processRecordsCnt)
-    Log.info(s"Sizes >>> procBuffer [${procBuffer.size}]")
+    Log.finer(s"Sizes >>> procBuffer [${procBuffer.size}]")
 
     val processed = procBuffer.sliding(2)
       .map { case mutable.Buffer(a: TextRecord, b: TextRecord) => a -> (interrupts(a, b), onlineAgain(a, b)) }
       .toMap
 
-    Log.info(s"Sizes >>> processed [${processed.size}]")
+    Log.finer(s"Sizes >>> processed [${processed.size}]")
 
     val processedRight = right.map { tr => (tr, (Set[String](), Set[String]())) }
       .toMap
 
-    Log.info(s"Sizes >>> processedRight [${processedRight.size}]")
+    Log.finer(s"Sizes >>> processedRight [${processedRight.size}]")
 
     val result = Interrupts(stationId, processed ++ processedRight)
     state.update(result)
@@ -124,7 +140,7 @@ object StationInterrupts {
     val initialState: StationInterruptsForFlatMap = defaultInterruptsForFlatMap(stationId, new ArrayBuffer)
     val newState: StationInterruptsForFlatMap = state.getOption.getOrElse(initialState) // records.size == 0
 
-    Log.info(s"${values.size} input records : [$stationId]")
+    Log.fine(s"${values.size} input records : [$stationId]")
 
     for (tr <- values) newState.records :+ tr
 
@@ -164,7 +180,7 @@ object StationInterrupts {
         .foldLeft(Set[String]())((r, c) => r.union(c))
 
       val offSz = off.size
-      if (offSz > 0) Log.info(s"""$offSz channel(s) interrupted: [$stationId] = $off""")
+      if (offSz > 0) Log.finer(s"""$offSz channel(s) interrupted: [$stationId] = $off""")
 
       val on = newState.records
         .sliding(2)
@@ -172,10 +188,10 @@ object StationInterrupts {
         .foldLeft(Set[String]())((r, c) => r.union(c))
 
       val onSz = on.size
-      if (onSz > 0) Log.info(s"""$onSz channel(s) online again: [$stationId] = $on""")
+      if (onSz > 0) Log.fine(s"""$onSz channel(s) online again: [$stationId] = $on""")
       if (onSz > 0 || offSz > 0) {
-        Log.info(s"current = $current")
-        Log.info(s"off -- on = ${off -- on}")
+        Log.finer(s"current = $current")
+        Log.finer(s"off -- on = ${off -- on}")
       }
 
       newState.interrupts = current ++ off -- on
@@ -248,7 +264,7 @@ object StationInterrupts {
 
     def addOne(str: String): Unit = {
       result += str
-      Log.info(s"$str : online again - [${currentRecord.stationId}] @ ${currentRecord.eventTime}")
+      Log.fine(s"$str : online again - [${currentRecord.stationId}] @ ${currentRecord.eventTime}")
     }
 
     // TODO use Shapeless instead
@@ -268,7 +284,7 @@ object StationInterrupts {
     if (previousRecord.waterSurfaceTemp.isNaN && !currentRecord.waterSurfaceTemp.isNaN) addOne("waterSurfaceTemp")
 
     val sz = result.size
-    if (sz > 0) Log.info(s"$sz channel(s) online again : [${currentRecord.stationId}] @ ${currentRecord.eventTime}")
+    if (sz > 0) Log.fine(s"$sz channel(s) online again : [${currentRecord.stationId}] @ ${currentRecord.eventTime}")
 
     result.toSet
 
@@ -280,7 +296,7 @@ object StationInterrupts {
 
     def addOne(str: String): Unit = {
       result += str
-      Log.info(s"$str : interrupted - [${currentRecord.stationId}] @ ${currentRecord.eventTime}")
+      Log.finer(s"$str : interrupted - [${currentRecord.stationId}] @ ${currentRecord.eventTime}")
     }
 
     Log.finest(s"comparing $previousRecord to $currentRecord")
@@ -302,7 +318,7 @@ object StationInterrupts {
     if (currentRecord.waterSurfaceTemp.isNaN && !previousRecord.waterSurfaceTemp.isNaN) addOne("waterSurfaceTemp")
 
     val sz = result.size
-    if (sz > 0) Log.info(s"$sz channel(s) interrupted : [${currentRecord.stationId}] @ ${currentRecord.eventTime}")
+    if (sz > 0) Log.fine(s"$sz channel(s) interrupted : [${currentRecord.stationId}] @ ${currentRecord.eventTime}")
 
     result.toSet
   }

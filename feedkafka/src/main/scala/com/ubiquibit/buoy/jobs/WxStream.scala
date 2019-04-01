@@ -60,25 +60,21 @@ class WxStream(env: {
       .option("spark.sql.shuffle.partitions", conf.getString("spark.partitions"))
       .load()
 
-    //    kafkaFeed.printSchema()
-
     import StationInterrupts._
     import scala.concurrent.duration._
-
-    val enc2: Encoder[StationInterrupts] = Encoders.product[StationInterrupts]
 
     val recordsByStationId = kafkaFeed
       .map(deserialize)
       .groupByKey(_.stationId)
 
-    val interruptScanner:Dataset[Interrupts] = recordsByStationId.flatMapGroupsWithState(
+    val interruptScanner: Dataset[Interrupts] = recordsByStationId.flatMapGroupsWithState(
       outputMode = OutputMode.Append,
       timeoutConf = GroupStateTimeout.NoTimeout)(func = updateInterrupts)
 
     // Interrupts(var stationId: String, var records: Map[TextRecord, (Set[String], Set[String])])
     val interruptedOutput = interruptScanner
-//      .filter(si => si.interrupts.nonEmpty)
-       .filter(_.isInterrupted)
+      .filter(_.isInterrupted)
+      .map(_.inWindow())
       .withColumn("interrupted", lit("INTERRUPTED"))
       .writeStream
       .format("console")
@@ -88,8 +84,8 @@ class WxStream(env: {
       .start
 
     val onlineAgainOut = interruptScanner
-//      .filter(si=>si.interrupts.isEmpty)
       .filter(_.isOnlineAgain)
+      .map(_.inWindow())
       .withColumn("online", lit("ONLINE"))
       .writeStream
       .format("console")
@@ -98,17 +94,9 @@ class WxStream(env: {
       .outputMode(OutputMode.Append)
       .start
 
-    //    val allOutput = interruptScanner
-    //      .writeStream
-    //      .format("console")
-    //      .option("truncate", false)
-    //      .trigger(Trigger.ProcessingTime(128.seconds))
-    //      .outputMode(OutputMode.Append)
-    //      .start
 
     interruptedOutput.awaitTermination()
     onlineAgainOut.awaitTermination()
-    //    allOutput.awaitTermination()
 
   }
 
