@@ -1,6 +1,22 @@
 # sensor-failure
 
-####  download buoy data 
+This project demonstrates how to use Spark's Arbitrary Stateful Streaming Engine to generate ML data from a publicly-available sensor network.
+
+#### Background
+
+NOAA operates a world-wide network of weather stations under auspices of the [National Data Buoy Center](https://www.ndbc.noaa.gov/). 
+
+Reporting weather stations have multiple configurations. Sensor arrys are either land-based (C-man), moored, or floating. Weather reports are transmitted via [GOES](https://en.wikipedia.org/wiki/Geostationary_Operational_Environmental_Satellite) or [Iridium](https://en.wikipedia.org/wiki/Iridium_satellite_constellation) satellite networks to a ground facility in Wallops Island, Virginia.
+
+Stations are equipped with an array of near-surface-level and underwater sensors. In other words: Different stations report different data.
+
+Stations report data on a fixed period or continuously. Data feeds are aggregated hourly and published to a publicly-accessible web-share location.
+
+From [whence](https://www.ndbc.noaa.gov/data/realtime2/) we start.   
+
+#### Quickstart
+
+#####  download buoy data 
 
 ```bash 
 % mkdir data && cd data ;
