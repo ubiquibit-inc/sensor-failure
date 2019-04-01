@@ -6,7 +6,7 @@ This project demonstrates how to use Spark's Arbitrary Stateful Streaming Engine
 
 NOAA operates a world-wide network of weather stations under auspices of the [National Data Buoy Center](https://www.ndbc.noaa.gov/). 
 
-Reporting weather stations have multiple configurations. Sensor arrys are either land-based (C-man), moored, or floating. Weather reports are transmitted via [GOES](https://en.wikipedia.org/wiki/Geostationary_Operational_Environmental_Satellite) or [Iridium](https://en.wikipedia.org/wiki/Iridium_satellite_constellation) satellite networks to a ground facility in Wallops Island, Virginia.
+Reporting weather stations have multiple configurations. Sensor arrays are either land-based (C-man), moored, or floating. Weather reports are transmitted via [GOES](https://en.wikipedia.org/wiki/Geostationary_Operational_Environmental_Satellite) or [Iridium](https://en.wikipedia.org/wiki/Iridium_satellite_constellation) satellite networks to a ground facility in Wallops Island, Virginia.
 
 Stations are equipped with an array of near-surface-level and underwater sensors. In other words: Different stations report different data.
 
@@ -103,7 +103,7 @@ Keep track of the Station ID that the App chooses by looking at stdout
 ##### Run WxStream
 
 ```bash
-/bin/spark-submit --class "com.ubiquibit.buoy.jobs.WxStream" --master "spark://Flob.local:7077" --deploy-mode cluster --executor-cores 4 --packages "org.apache.spark:spark-sql-kafka-0-10_2.11:2.4.0" "/Users/jason/scratch/sensor-failure/feedkafka/target/scala-2.11/feedkafka-assembly-1.0.jar"
+/bin/spark-submit --class "com.ubiquibit.buoy.jobs.WxStream" --master "spark://Flob.local:7077" --deploy-mode cluster --executor-cores 4 --packages "org.apache.spark:spark-sql-kafka-0-10_2.11:2.4.0" "/Users/jason/scratch/sensor-failure/target/scala-2.11/feedkafka-assembly-1.0.jar"
 ``` 
 
 > check the driver's stdout log and [SparkUI](http://localhost:8080)
