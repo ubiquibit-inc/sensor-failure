@@ -21,9 +21,9 @@ class WriteInterruptRecord(env: {
 
   def run(station: Option[String]): Unit = {
 
-    val stationId: StationId = StationId.makeStationId(station.getOrElse("46082"))
+    val stationId: StationId = StationId.makeStationId(station.getOrElse("BZST2"))
     val interruptionCow: TextRecord = TextRecord(new Timestamp(System.currentTimeMillis()), 80, stationId.toString,
-      0F, 0F, 0F, 0F, 0F, 0F, 0F, seaLevelPressure = Float.NaN, 0F, 0F, 0F, 0F, 0F, 0F
+      0F, 0F, 0F, 0F, 0F, 0F, 0F, 0F, 0F, waterSurfaceTemp = Float.NaN, 0F, 0F, 0F, 0F
     )
 
     import ss.implicits._

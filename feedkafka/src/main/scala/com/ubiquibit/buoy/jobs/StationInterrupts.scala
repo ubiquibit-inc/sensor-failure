@@ -1,9 +1,11 @@
 package com.ubiquibit.buoy.jobs
 
 import java.sql.Timestamp
+import java.util.logging.Logger
 
 import com.ubiquibit.buoy.TextRecord
 import org.apache.spark.sql.streaming.GroupState
+
 import scala.collection.mutable.ArrayBuffer
 
 /**
@@ -23,6 +25,7 @@ object StationInterrupts {
     */
   private val sanityCheck = true
   private val numRecords = 16
+  @transient private val Log: Logger = Logger.getLogger(getClass.getName)
 
   def defaultInterruptsForFlatMap(stationId: String, records: ArrayBuffer[TextRecord]): StationInterruptsForFlatMap = StationInterruptsForFlatMap(stationId, records, Set())
 
@@ -42,8 +45,8 @@ object StationInterrupts {
     val initialState: StationInterruptsForFlatMap = defaultInterruptsForFlatMap(stationId, new ArrayBuffer)
     val newState: StationInterruptsForFlatMap = state.getOption.getOrElse(initialState) // records.size == 0
 
-    println(s"StationId: [$stationId]")
-    println(s"[$stationId] input records: ${values.size}")
+    Log.info(s"StationId: [$stationId]")
+    Log.info(s"[$stationId] input records: ${values.size}")
 
     for (tr <- values) newState.records :+ tr
 
@@ -51,48 +54,60 @@ object StationInterrupts {
       rec0.eventTime after rec1.eventTime
     }
 
-    println(s"First record before sort: ${newState.records.headOption}")
+    Log.finer(s"First record before sort: ${newState.records.headOption}")
     newState.records = (newState.records ++ values).sortWith(sortRecords)
-    println(s"First record after sort: ${newState.records.headOption}")
+    Log.finer(s"First record after sort: ${newState.records.headOption}")
 
-    println(s"records size before dropRight: ${newState.records.size}")
+    Log.finer(s"records size before dropRight: ${newState.records.size}")
     if (newState.records.size > numRecords)
       newState.records = newState.records.dropRight(newState.records.size - numRecords)
-    println(s"records size after dropRight: ${newState.records.size}")
+    Log.finer(s"records size after dropRight: ${newState.records.size}")
 
-    println(s"Printing [$stationId] records soon...")
-    newState.records.zipWithIndex.foreach { case (v, idx) => println(s"$idx: $v") }
-    println(s"Printed [$stationId] records.")
+    Log.finer(s"Printing [$stationId] records soon...")
+    newState.records.zipWithIndex.foreach { case (v, idx) => Log.finest(s"$idx: $v") }
+    Log.finer(s"Printed [$stationId] records.")
 
-    def recentRecs(): Seq[TextRecord] = {
-      if (newState.records.size > 1) {
-        Seq(newState.records.last, newState.records.toList(newState.records.size - 2))
-      }
-      else if (newState.records.size == 1) {
-        Seq(newState.records.last)
-      }
-      else {
-        Seq()
-      }
-    }
-
+    /* TODO: Think!
+     *
+     * The following logic is problematic in that - while it captures all in-window
+     * interruptions, the way we are reporting GroupState back out through
+     * flatMapGroupsWithState doesn't really make it obvious which record caused the interrupt
+     * in the case of out-of-order record arrival.
+     *
+     * It may not be a problem to know that "last if possibly out of order record" caused an
+     * interrupt, but it may introduce downstream skew into ML models since we don't "rewind"
+     * the frame of reference to a set number of records per interruption.
+     */
     if (newState.records.size > 1) {
-      println(s"More than 1 [$stationId] newState record")
-      val seq = recentRecs()
-      val newer = seq.head
-      val older = seq(1)
+
+      Log.info(s"More than 1 [$stationId] newState record")
+
       val current = newState.interrupts
-      newState.interrupts = current ++ interrupts(older, newer) -- onlineAgain(older, newer)
+
+      val off = newState.records
+        .sliding(2)
+        .map { case ArrayBuffer(a: TextRecord, b: TextRecord) => interrupts(a, b) }
+        .foldLeft(Set[String]())((r, c) => r.union(c))
+      Log.info(s"${off.size} interrupts made it through foldLeft.")
+
+      val on = newState.records
+        .sliding(2)
+        .map { case Seq(a: TextRecord, b: TextRecord) => onlineAgain(a, b) }
+        .foldLeft(Set[String]())((r, c) => r.union(c))
+      Log.info(s"${on.size} online again events made it through foldLeft.")
+
+      newState.interrupts = current ++ off -- on
+
     }
     // records.size == 1
     else {
-      println(s"Just 1 [$stationId] newState record")
+      Log.info(s"Just 1 [$stationId] newState record")
       newState.interrupts = Set()
     }
 
-    println(s"Printing [$stationId] interrupts soon...")
-    newState.interrupts.zipWithIndex.foreach { case (v, idx) => println(s"$idx: $v") }
-    println(s"Printed [$stationId] interrupts.")
+    Log.finer(s"Printing [$stationId] interrupts soon...")
+    newState.interrupts.zipWithIndex.foreach { case (v, idx) => Log.info(s"$idx: $v") }
+    Log.finer(s"Printed [$stationId] interrupts.")
 
     state.update(newState)
     Iterator(newState)
@@ -145,8 +160,9 @@ object StationInterrupts {
   private def onlineAgain(previousRecord: TextRecord, currentRecord: TextRecord): Set[String] = {
     val result = ArrayBuffer.empty[String]
 
-    def addOne(str: String) = {
+    def addOne(str: String): Unit = {
       result += str
+      Log.info(s"Found $str as onlineAgain.")
     }
 
     // TODO use Shapeless instead
@@ -165,6 +181,8 @@ object StationInterrupts {
     if (previousRecord.windSpeed.isNaN && !currentRecord.windSpeed.isNaN) addOne("windSpeed")
     if (previousRecord.waterSurfaceTemp.isNaN && !currentRecord.waterSurfaceTemp.isNaN) addOne("waterSurfaceTemp")
 
+    Log.info(s"Found ${result.size} online again.")
+
     result.toSet
 
   }
@@ -173,9 +191,12 @@ object StationInterrupts {
 
     val result = ArrayBuffer.empty[String]
 
-    def addOne(str: String) = {
+    def addOne(str: String): Unit = {
       result += str
+      Log.info(s"Found $str as interrupt.")
     }
+
+    Log.finest(s"comparing $previousRecord to $currentRecord")
 
     // TODO use Shapeless instead
     if (currentRecord.windDirection.isNaN && !previousRecord.windDirection.isNaN) addOne("windDirection")
@@ -192,6 +213,8 @@ object StationInterrupts {
     if (currentRecord.tide.isNaN && !previousRecord.tide.isNaN) addOne("tide")
     if (currentRecord.windSpeed.isNaN && !previousRecord.windSpeed.isNaN) addOne("windSpeed")
     if (currentRecord.waterSurfaceTemp.isNaN && !previousRecord.waterSurfaceTemp.isNaN) addOne("waterSurfaceTemp")
+
+    Log.info(s"Found ${result.size} interrupts.")
 
     result.toSet
   }
