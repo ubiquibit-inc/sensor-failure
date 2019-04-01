@@ -12,8 +12,8 @@ scalaVersion := "2.11.12"
 
 // It's possible to define many kinds of settings, such as:
 
-name := "feedkafka"
-organization := "com.ubiquibit.sensorfailure"
+name := "sensorfailure"
+organization := "com.ubiquibit.buoy"
 version := "1.0"
 
 resolvers ++= Seq(
