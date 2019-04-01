@@ -1,7 +1,5 @@
 # sensor-failure
 
-Detect and classify sensor failures in NOAA's NDBC network.
-
 ####  download buoy data 
 
 ```bash 
@@ -33,7 +31,7 @@ We have data from 950 WxStations reporting 17 different formats.
 # Text files 799
 ```
 
-#### Kafka & Redis
+##### Kafka & Redis
 
 - edit [application.properties](src/main/resources/application.properties)
 - Run Redis (on Docker)
@@ -49,6 +47,8 @@ cd bash
 # edit, then run...
 ./start-kafka.sh
 ./create-kafka-topics.sh
+
+# wait...
 ```
 
 - run [InitKafkaImpl](src/main/scala/com/ubiquibit/buoy/jobs/setup/InitKafka.scala) 
@@ -78,13 +78,13 @@ redis:6379> hmget "stationId:46082" "TXT"
 
 Keep track of the Station ID that the App chooses by looking at stdout
 
-#### Init WxStream
+##### Init WxStream
 
-- run [StageFeedsFromRedis](src/main/scala/com/ubiquibit/buoy/jobs/util/StageFeeds.scala)
+- run [StageFeeds](src/main/scala/com/ubiquibit/buoy/jobs/util/StageFeeds.scala)
 
 > It writes a file to the staging directory that will later be used by [WxStream](src/main/scala/com/ubiquibit/buoy/jobs/WxStream.scala)
 
-#### Run WxStream
+##### Run WxStream
 
 ```bash
 /bin/spark-submit --class "com.ubiquibit.buoy.jobs.WxStream" --master "spark://Flob.local:7077" --deploy-mode cluster --executor-cores 4 --packages "org.apache.spark:spark-sql-kafka-0-10_2.11:2.4.0" "/Users/jason/scratch/sensor-failure/feedkafka/target/scala-2.11/feedkafka-assembly-1.0.jar"
@@ -93,6 +93,3 @@ Keep track of the Station ID that the App chooses by looking at stdout
 > check the driver's stdout log and [SparkUI](http://localhost:8080)
 
 Note: WxStream console output shows up in the *driver* stdout. StationInterrupt and other debug logging shows up in the *application* stderr (if configured in `$SPARK_HOME/conf/log4.properties`)
-   
-
-
