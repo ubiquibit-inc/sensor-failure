@@ -92,8 +92,6 @@ redis:6379> hmget "stationId:46082" "TXT"
 1) "KAFKALOADED"
 ```
 
-Keep track of the Station ID that the App chooses by looking at stdout
-
 ##### Init WxStream
 
 - run [StageFeeds](src/main/scala/com/ubiquibit/buoy/jobs/util/StageFeeds.scala)
