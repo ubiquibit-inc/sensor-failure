@@ -26,13 +26,13 @@ class StationInterruptsSpec extends FunSpec {
 
     it("updateInterrupts should:") {
 
-      val result0 = updateInterrupts(defaultState, rec0)
+      val result0 = updateInterruptsSimple(defaultState, rec0)
       assert(result0.interrupts.isEmpty, "have an empty default state")
 
-      val result1 = updateInterrupts(result0, rec1)
+      val result1 = updateInterruptsSimple(result0, rec1)
       assert(result0.interrupts.contains("windDirection"), "detect interrupt when a channel goes from a value to NaN")
 
-      val result2 = updateInterrupts(result1, rec2)
+      val result2 = updateInterruptsSimple(result1, rec2)
       assert(!result2.interrupts.contains("windDirection"), "release the interrupt when a channel goes from NaN to a real value")
       assert(result2.interrupts.contains("windSpeed"), "detect interrupt when a channel goes from value to NaN, even when another channel goes in the other direction")
 

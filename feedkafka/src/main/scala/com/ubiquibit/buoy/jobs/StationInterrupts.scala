@@ -6,6 +6,7 @@ import java.util.logging.Logger
 import com.ubiquibit.buoy.TextRecord
 import org.apache.spark.sql.streaming.GroupState
 
+import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 
 /**
@@ -17,6 +18,12 @@ case class StationInterrupts(var stationId: String, var lastRecord: TextRecord, 
 
 case class StationInterruptsForFlatMap(var stationId: String, var records: ArrayBuffer[TextRecord], var interrupts: Set[String])
 
+case class Interrupts(var stationId: String, var records: Map[TextRecord, (Set[String], Set[String])]) {
+  def isInterrupted: Boolean = records.exists(_._2._1.nonEmpty)
+
+  def isOnlineAgain: Boolean = records.exists(_._2._2.nonEmpty)
+}
+
 object StationInterrupts {
 
   /**
@@ -26,6 +33,78 @@ object StationInterrupts {
   private val sanityCheck = true
   private val numRecords = 16
   @transient private val Log: Logger = Logger.getLogger(getClass.getName)
+
+  def updateInterrupts(stationId: String,
+                       input: Iterator[TextRecord],
+                       state: GroupState[Interrupts]): Iterator[Interrupts] = {
+
+    Log.info(s"updateInterrupts [$stationId]")
+
+    if (state.hasTimedOut) {
+      Log.info(s"state timed out for $stationId")
+      Log.info(">>> SHORT CIRCUIT <<<")
+      val existing = state.get
+      state.remove()
+      existing.copy(stationId = "", records = Map())
+      return Iterator()
+    }
+
+    val inputValues = input.toList
+    if (sanityCheck) assert(input.forall(_.stationId == stationId))
+    val defaultState = Interrupts(stationId, Map())
+    val newState: Interrupts = state.getOption.getOrElse(defaultState)
+    Log.info(s"newState: $newState")
+
+    Log.info(s">>> ${inputValues.size} input records : [$stationId] <<<")
+
+    // need two to tango...
+    if (newState.records.isEmpty && inputValues.size == 1) {
+      Log.info(">>> values size = 1 <<<")
+      Log.info(">>> SHORT CIRCUIT <<<")
+      newState.stationId = stationId
+      newState.records = Map(inputValues.head -> (Set[String](), Set[String]()))
+      state.update(newState)
+      return Iterator(newState)
+    }
+
+    Log.info(">>> NO SHORT CIRCUIT <<<")
+
+    val processRecordsCnt = numRecords
+    val retainRecordsCnt = numRecords * 2 - 1
+
+    val sorted = (newState.records.keys ++ inputValues).toList.sortWith(sortRecords)
+    // throw away arrivals outside of our retained records window
+    val retained = sorted.dropRight(sorted.size - retainRecordsCnt)
+    val right = {
+      if (sorted.isEmpty) List()
+      else{
+        val allRight = sorted.slice(processRecordsCnt - 1, sorted.size)
+        allRight.dropRight(allRight.size - retainRecordsCnt)
+      }
+    }
+
+    Log.info(s"Sizes >>> sorted [${sorted.size}] ~ retained [${retained.size}] ~ right [${right.size}]")
+
+    val procBuffer: mutable.Buffer[TextRecord] = mutable.Buffer[TextRecord]()
+    procBuffer ++= retained.dropRight(retained.size - processRecordsCnt)
+    Log.info(s"Sizes >>> procBuffer [${procBuffer.size}]")
+
+    val processed = procBuffer.sliding(2)
+      .map { case mutable.Buffer(a: TextRecord, b: TextRecord) => a -> (interrupts(a, b), onlineAgain(a, b)) }
+      .toMap
+
+    Log.info(s"Sizes >>> processed [${processed.size}]")
+
+    val processedRight = right.map { tr => (tr, (Set[String](), Set[String]())) }
+      .toMap
+
+    Log.info(s"Sizes >>> processedRight [${processedRight.size}]")
+
+    val result = Interrupts(stationId, processed ++ processedRight)
+    state.update(result)
+    Iterator(result)
+
+  }
 
   def defaultInterruptsForFlatMap(stationId: String, records: ArrayBuffer[TextRecord]): StationInterruptsForFlatMap = StationInterruptsForFlatMap(stationId, records, Set())
 
@@ -49,12 +128,8 @@ object StationInterrupts {
 
     for (tr <- values) newState.records :+ tr
 
-    def sortRecords(rec0: TextRecord, rec1: TextRecord): Boolean = {
-      rec0.eventTime after rec1.eventTime
-    }
-
     Log.finer(s"First record before sort: ${newState.records.headOption}")
-    newState.records = (newState.records ++ values).sortWith(sortRecords)
+    newState.records = newState.records.sortWith(sortRecords)
     Log.finer(s"First record after sort: ${newState.records.headOption}")
 
     Log.finer(s"records size before dropRight: ${newState.records.size}")
@@ -89,7 +164,7 @@ object StationInterrupts {
         .foldLeft(Set[String]())((r, c) => r.union(c))
 
       val offSz = off.size
-      if( offSz > 0 ) Log.info(s"""$offSz channel(s) interrupted: [$stationId] = $off""")
+      if (offSz > 0) Log.info(s"""$offSz channel(s) interrupted: [$stationId] = $off""")
 
       val on = newState.records
         .sliding(2)
@@ -97,8 +172,8 @@ object StationInterrupts {
         .foldLeft(Set[String]())((r, c) => r.union(c))
 
       val onSz = on.size
-      if( onSz > 0 ) Log.info(s"""$onSz channel(s) online again: [$stationId] = $on""")
-      if( onSz > 0 || offSz > 0 ) {
+      if (onSz > 0) Log.info(s"""$onSz channel(s) online again: [$stationId] = $on""")
+      if (onSz > 0 || offSz > 0) {
         Log.info(s"current = $current")
         Log.info(s"off -- on = ${off -- on}")
       }
@@ -121,7 +196,11 @@ object StationInterrupts {
 
   }
 
-  def updateInterrupts(state: StationInterrupts, input: TextRecord): StationInterrupts = {
+  def sortRecords(rec0: TextRecord, rec1: TextRecord): Boolean = {
+    rec0.eventTime after rec1.eventTime
+  }
+
+  def updateInterruptsSimple(state: StationInterrupts, input: TextRecord): StationInterrupts = {
 
     // in-order - input AFTER state
     if (!input.eventTime.before(state.lastRecord.eventTime)) {
@@ -156,7 +235,7 @@ object StationInterrupts {
     var state: StationInterrupts = if (oldState.exists) oldState.get else defaultState
 
     for (input <- inputs) {
-      state = updateInterrupts(state, input)
+      state = updateInterruptsSimple(state, input)
       oldState.update(state)
     }
 
@@ -189,7 +268,7 @@ object StationInterrupts {
     if (previousRecord.waterSurfaceTemp.isNaN && !currentRecord.waterSurfaceTemp.isNaN) addOne("waterSurfaceTemp")
 
     val sz = result.size
-    if( sz > 0 ) Log.info(s"$sz channel(s) online again : [${currentRecord.stationId}] @ ${currentRecord.eventTime}")
+    if (sz > 0) Log.info(s"$sz channel(s) online again : [${currentRecord.stationId}] @ ${currentRecord.eventTime}")
 
     result.toSet
 
@@ -223,7 +302,7 @@ object StationInterrupts {
     if (currentRecord.waterSurfaceTemp.isNaN && !previousRecord.waterSurfaceTemp.isNaN) addOne("waterSurfaceTemp")
 
     val sz = result.size
-    if( sz > 0 ) Log.info(s"$sz channel(s) interrupted : [${currentRecord.stationId}] @ ${currentRecord.eventTime}")
+    if (sz > 0) Log.info(s"$sz channel(s) interrupted : [${currentRecord.stationId}] @ ${currentRecord.eventTime}")
 
     result.toSet
   }
