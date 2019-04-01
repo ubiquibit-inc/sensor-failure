@@ -12,7 +12,7 @@ Stations have multiple configurations:
 
 Sensor arrays are land-based, moored, or floating.
 
-![land based](img/iosn3_mini.jpg)
+![land based](img/sbio1.jpg)
 ![moored](img/image002.jpg)
 ![floating](img/12m1.jpg)
 
