@@ -1,20 +1,16 @@
 # sensor-failure
 
-This project demonstrates how to use Spark's Arbitrary Stateful Streaming Engine to generate ML data from a publicly-available sensor network.
-
-You too can have a fully-operational buoy anomaly detector running on your workstation. Just follow along. 
+Use Arbitrary Stateful Streaming to generate machine-learning sets from a publicly-available sensor network.
 
 #### Background
 
-[NOAA](https://www.noaa.gov/) operates a world-wide network of weather stations under auspices of the [National Data Buoy Center](https://www.ndbc.noaa.gov/). 
+[NOAA](https://www.noaa.gov/) manages a world-wide network of weather stations under auspices of the [National Data Buoy Center](https://www.ndbc.noaa.gov/). 
 
-Reporting weather stations have multiple configurations. Sensor arrays are either land-based (C-man), moored, or floating. Weather reports are transmitted via [GOES](https://en.wikipedia.org/wiki/Geostationary_Operational_Environmental_Satellite) or [Iridium](https://en.wikipedia.org/wiki/Iridium_satellite_constellation) satellite networks to a ground facility in Wallops Island, Virginia.
+Stations have multiple configurations. Sensor arrays are either land-based, moored, or floating. Data are transmitted via [GOES](https://en.wikipedia.org/wiki/Geostationary_Operational_Environmental_Satellite) or [Iridium](https://en.wikipedia.org/wiki/Iridium_satellite_constellation) satellite networks to a ground facility in Wallops Island, Virginia.
 
-Stations are equipped with an array of near-surface-level and underwater sensors. In other words: Different stations report different data.
+Stations support near-surface and underwater sensors and report at fixed intervals or continuously. 
 
-Stations report data on a fixed period or continuously. Data feeds are aggregated hourly and published to a publicly-accessible web-share location.
-
-From [whence](https://www.ndbc.noaa.gov/data/realtime2/) we start.   
+Feeds are aggregated hourly and published to a publicly-accessible web-share location. From [whence](https://www.ndbc.noaa.gov/data/realtime2/) we start.   
 
 #### Quickstart
 
