@@ -28,7 +28,7 @@ Where possible, NDBC supplements with feeds from assets outside of its direct ju
 
 #### Results
 
-The following trace shows sensor interrupts from weather station NPXN6: As the Stream is processed, the second to the last sensor sends a signal and then goes silent again.
+The following trace shows sensor interrupts from weather station []NPXN6](https://www.ndbc.noaa.gov/station_page.php?station=npxn6): As the Stream is processed, the second to the last sensor sends a signal and then goes silent again.
 
 ![interrupts](img/two-interrupts.png)
 
@@ -54,7 +54,7 @@ Together with Spark's arbitrary stateful processing engine, the algorithm is cap
 
 ##### Input
 
-NDBC's realtime [web-share](https://www.ndbc.noaa.gov/data/realtime2/) is updated hourly - "usually by 15 minutes after the hour". Data files store a 45 (check!) day history for a given station and are updated at the *top* of the file. 
+NDBC's realtime [web-share](https://www.ndbc.noaa.gov/data/realtime2/) is updated hourly - "usually by 15 minutes after the hour". Data files store a 45-day history for a given station and are updated at the *top* of the file. 
 
 For example:
 
@@ -62,7 +62,7 @@ For example:
 
 Two runtime options are provided for queuing up data for `WxStream`: `LiveKafkaFeeder` and `InitKafkaImpl` 
 
-`InitKafkaImpl` is a Spark application that processes fully-downloaded data files and writes them to Kafka. It needs to be run one time per station. 
+`InitKafkaImpl` is a Spark application that processes downloaded data files and writes them to Kafka. It needs to be run one time per station. 
 
 If you want to do retrospective analysis for a few stations, this is a good option. 
 
