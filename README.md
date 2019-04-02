@@ -10,15 +10,15 @@ Generates a trailing sequence of readings for each sensor interrupt.
 
 Sensor arrays are land-based, moored, or floating.
 
-![land based](img/sbio1.jpg | width=200)
-![moored](img/image002.jpg | width=200)
-![floating](img/12m1.jpg | width=200)
+![land based](img/sbio1.jpg)
+![moored](img/image002.jpg)
+![floating](img/12m1.jpg)
 
 Stations support near-surface and underwater sensors and report at fixed intervals or continuously. 
 
 Data are transmitted via [GOES](https://en.wikipedia.org/wiki/Geostationary_Operational_Environmental_Satellite) or [Iridium](https://en.wikipedia.org/wiki/Iridium_satellite_constellation) satellite networks to a ground facility in Wallops Island, Virginia. Feeds are aggregated hourly and published to a publicly-accessible web-share location.   
 
-![sequence diagram](img/NDBC-seqdiagram.png | width=500)
+![sensor data flow](img/NDBC-seqdiagram.png)
 
 #### Quickstart
 
