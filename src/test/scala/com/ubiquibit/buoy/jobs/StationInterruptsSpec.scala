@@ -19,9 +19,6 @@ import com.ubiquibit.RandomData
 import com.ubiquibit.buoy.TextRecord
 import org.scalatest.FunSpec
 
-import scala.collection.mutable
-import scala.util.Random
-
 class StationInterruptsSpec extends FunSpec with RandomData {
 
   val stationId = "myStationInLife"
@@ -55,33 +52,4 @@ class StationInterruptsSpec extends FunSpec with RandomData {
 
   }
 
-  describe("Interrupts case class") {
-
-    it("has only 16 records in the window") {
-
-      val m: mutable.Map[TextRecord, (Set[String], Set[String])] = mutable.Map()
-      (0 until 30).foreach { _ => m += rec -> (Set(s), Set(s)) }
-
-      val instance = Interrupts(stationId, records = m.toMap)
-
-      assert(instance.inWindow().records.size == 16)
-    }
-
-    it("returns the most recent 16 records inWindow") {
-      val m: mutable.Map[TextRecord, (Set[String], Set[String])] = mutable.Map()
-      (0 until 30).foreach { _ => m += rec -> (Set(s), Set(s)) }
-
-      val instance = Interrupts(stationId, records = m.toMap)
-
-      val sortedEvents = m.keys.toList.sortWith(sortRecords)
-
-      // sorted latest to earliest
-      assert(sortedEvents.head.eventTime after sortedEvents.last.eventTime)
-
-      val keysOutTheWindow = instance.records.keys.filter( k=> !sortedEvents.contains(k))
-
-      keysOutTheWindow.foreach(k => assert(k.eventTime before sortedEvents.tail.head.eventTime))
-
-    }
-  }
 }

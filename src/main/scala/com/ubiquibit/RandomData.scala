@@ -17,6 +17,7 @@ import java.sql.Timestamp
 
 import com.ubiquibit.buoy.TextRecord
 
+import scala.collection.mutable.ArrayBuffer
 import scala.util.Random
 
 /**
@@ -47,5 +48,13 @@ trait RandomData {
   }
 
   def rec: TextRecord = TextRecord(ts, i, s, f, f, f, f, f, f, f, f, f, f, f, f, f, f)
+
+  def testRecords(): Seq[TextRecord] = {
+    val ab = new ArrayBuffer[TextRecord](32)
+    (0 to 32).foreach {
+      ab :+ rec
+    }
+    ab
+  }
 
 }

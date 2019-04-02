@@ -29,26 +29,6 @@ import scala.collection.mutable.ArrayBuffer
   */
 case class StationInterrupts(var stationId: String, var lastRecord: TextRecord, var interrupts: Set[String])
 
-/**
-  * @param stationId event source
-  * @param records map from individual event to (channel interrupts, re-activation events) on that tick
-  */
-case class Interrupts(var stationId: String, var records: Map[TextRecord, (Set[String], Set[String])]) {
-
-  private val processRecordsCnt = StationInterrupts.numRecords
-  import StationInterrupts._
-
-  def isInterrupted: Boolean = records.exists(_._2._1.nonEmpty)
-
-  def isOnlineAgain: Boolean = records.exists(_._2._2.nonEmpty)
-
-  def inWindow(): Interrupts = {
-    val keepers = records.keys.toList.sortWith(sortRecords).dropRight(records.size - processRecordsCnt)
-    Interrupts(stationId, records.filterKeys(k=> keepers.contains(k)))
-  }
-
-}
-
 object StationInterrupts {
 
   /**
