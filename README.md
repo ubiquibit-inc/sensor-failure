@@ -6,7 +6,7 @@ We demonstrate real-time processing of streaming sensor data with persistence fo
 
 ![basic flow](img/buoy-flow.png) 
 
-The system implements Spark Arbitrary Stateful Processing to consume Kafka feeds. Upon detection of interrupt, a trailing event stream is persisted in Redis for follow-on ML analysis.
+The system implements Spark Arbitrary Stateful Processing to consume Kafka feeds. Upon detection of interrupt, a trailing event stream is persisted in Redis for ML analyses.
 
 #### Background
 
@@ -38,7 +38,7 @@ The following trace show sensor interrupts from weather station NPXN6: As the St
 
 Each time any monitored station stops sending a signal, a block of 16 records is processed by our streaming sinks.
 
-Spark supports a wide-variety of output sinks. This example uses a simple [ForeachWriter](src/main/scala/com/ubiquibit/buoy/jobs/InterruptWriter.scala) that writes to disk.
+Spark supports a wide-variety of output sinks. The depicted example uses a simple [ForeachWriter](src/main/scala/com/ubiquibit/buoy/jobs/InterruptWriter.scala) that writes to disk.
 
 For longer-term persistance, we write the output to Redis, where we can pick it up later from Machine Learning jobs.
 
