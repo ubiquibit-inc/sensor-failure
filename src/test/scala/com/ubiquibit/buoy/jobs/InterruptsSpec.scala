@@ -42,7 +42,7 @@ class InterruptsSpec extends FunSpec with RandomData {
 
       val instance = Interrupts(stationId, records = m.toMap)
 
-      assert(instance.inWindow().records.size == 16)
+      assert(instance.inWindow().records.size == StationInterrupts.numRecords)
     }
 
     it("returns the most recent 16 records inWindow") {

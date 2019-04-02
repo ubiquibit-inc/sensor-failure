@@ -103,10 +103,10 @@ class StationInterruptsSpec extends FunSpec with RandomData {
 
     }
 
-    it("handles the boundary case where there are exactly 16 records"){
+    it("handles a boundary case with exactly numRecords"){
 
       val stationId = s
-      val testRecs = testRecords(Some(16), Some(stationId)).sortWith(sortRecords)
+      val testRecs = testRecords(Some(StationInterrupts.numRecords), Some(stationId)).sortWith(sortRecords)
 
       val output = updateInterrupts(s, testRecs.iterator, new FakeGroupState).toList.head
 
