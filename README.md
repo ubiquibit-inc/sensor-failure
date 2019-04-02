@@ -26,13 +26,9 @@ Data are transmitted via [GOES](https://en.wikipedia.org/wiki/Geostationary_Oper
 
 Where possible, NDBC supplements with feeds from assets outside of its direct jurisdiction, including ship observations.
 
-#### Architecture
-
-TODO 
-
 #### Results
 
-The following trace show sensor interrupts from weather station NPXN6: As the Stream is processed, the second to the last sensor sends a signal and then goes silent again.
+The following trace shows sensor interrupts from weather station NPXN6: As the Stream is processed, the second to the last sensor sends a signal and then goes silent again.
 
 ![interrupts](img/two-interrupts.png)
 
@@ -43,6 +39,40 @@ Spark supports a wide-variety of output sinks. The depicted example uses a simpl
 For longer-term persistance, we write the output to Redis, where we can pick it up later from Machine Learning jobs.
 
 #### Nuts & Bolts
+
+##### WxStream
+
+The heart of the implementation takes place in the WxStream Spark Application. 
+
+Each WxStream consumes from [a number of station topics](src/main/scala/com/ubiquibit/buoy/jobs/WxStream.scala#L71) then uses [flatMapGroupWithState](src/main/scala/com/ubiquibit/buoy/jobs/WxStream.scala#L83) to *splay out* execution to the cluster.
+
+StationInterrupts' [updateInterrupts function](src/main/scala/com/ubiquibit/buoy/jobs/StationInterrupts.scala#L44) calculates interrupts and "onlineAgain" for each consecutive set of records.
+
+![core processing](img/processed.png)
+
+Together with Spark's arbitrary stateful processing engine, the algorithm is capable of handling out-of-order event arrivals, record timeouts (to preserve memory), and scales out to support arbitrarily large sensor networks.
+
+##### Input
+
+Two runtime options provided for queuing up data: `LiveKafkaFeeder` and `InitKafkaImpl`.
+
+NDBC's realtime [web-share](https://www.ndbc.noaa.gov/data/realtime2/) is updated hourly - "usually by 15 minutes after the hour". Data files store a 45 (check!) day history for a given station and are updated at the *top* of the file. 
+
+For example:
+
+![topoffile](img/head.png)
+
+`InitKafkaImpl` is a Spark application that processes fully-downloaded data files and writes them to Kafka. It needs to be run one time per station. 
+
+If you want to do retrospective analysis for a few stations, this is a good option. 
+
+`LiveKafkaFeeder` is a JVM application that checks for changes to the files on the web-share. As changes are detected, it will write them to Kafka.
+
+This is a good option if you want to run `WxStream` for extended periods of time.
+
+You may use either one, but it's probably best to start with InitKafkaImpl even in the case that you want to run the live feeder.
+
+##### Output
 
 TODO 
 
