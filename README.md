@@ -2,7 +2,11 @@
 
 Anomaly detection in large sensor networks using Spark Arbitrary Stateful Streaming.
 
-This implementation saves off a small trailing data set for each sensor interrupt. 
+This implementation saves off a small trailing data set for each sensor interrupt.
+
+![](img/results.png)
+
+The design applies to many IoT use cases.
 
 #### Background
 
@@ -22,7 +26,19 @@ Data are transmitted via [GOES](https://en.wikipedia.org/wiki/Geostationary_Oper
 
 Where possible, NDBC supplements with feeds from assets outside of its direct jurisdiction, including ship observations.
 
-#### Quickstart
+#### Results
+
+TODO
+
+#### Architecture
+
+TODO 
+
+#### Nuts & Bolts
+
+TODO 
+
+#### Howto
 
 #####  download buoy data 
 
