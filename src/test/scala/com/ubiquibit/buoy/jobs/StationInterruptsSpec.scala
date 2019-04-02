@@ -13,10 +13,11 @@
 
 package com.ubiquibit.buoy.jobs
 
-import java.sql.Timestamp
+import java.sql.{Date, Timestamp}
 
 import com.ubiquibit.RandomData
 import com.ubiquibit.buoy.TextRecord
+import org.apache.spark.sql.streaming.GroupState
 import org.scalatest.FunSpec
 
 class StationInterruptsSpec extends FunSpec with RandomData {
@@ -52,4 +53,83 @@ class StationInterruptsSpec extends FunSpec with RandomData {
 
   }
 
+  describe("updateInterrupts") {
+
+    it("returns text record input inside of the output") {
+
+      val r0 = rec
+      val r1 = rec
+      val r2 = rec
+
+      val output = updateInterrupts(s, Iterator(r0, r1, r2), new FakeGroupState()).toList
+
+      assert(output.exists(irps => irps.records.keys.exists(_.equals(r0))))
+      assert(output.exists(irps => irps.records.keys.exists(_.equals(r1))))
+      assert(output.exists(irps => irps.records.keys.exists(_.equals(r2))))
+
+    }
+
+    it("returns an interrupt notification for interrupted records") {
+
+      val r0 = rec
+      val r1 = TextRecord(ts, i, r0.stationId, windDirection = Float.NaN, f, f, f, f, f, f, f, f, f, f, f, f, f)
+      val r2 = TextRecord(ts, i, r0.stationId, f, f, f, f, f, f, f, f, f, f, f, f, f, f)
+
+      val output: Interrupts = updateInterrupts(r0.stationId, Iterator(r0, r1, r2), new FakeGroupState).toList.head
+
+      def doAsserts(out: Interrupts) = {
+        assert(out.records(r0)._1.isEmpty)
+        assert(out.records(r0)._2.isEmpty)
+
+        assert(out.records(r1)._1.size == 1)
+        assert(out.records(r1)._1.contains("windDirection"))
+        assert(out.records(r1)._2.isEmpty)
+
+        assert(out.records(r2)._1.isEmpty)
+        assert(out.records(r2)._2.size == 1)
+        assert(out.records(r2)._2.contains("windDirection"))
+      }
+
+      doAsserts(output)
+
+      val output2 = updateInterrupts(r0.stationId, Iterator(r2, r1, r0), new FakeGroupState).toList.head
+      doAsserts(output2)
+      val output3 = updateInterrupts(r0.stationId, Iterator(r1, r2, r0), new FakeGroupState).toList.head
+      doAsserts(output3)
+      val output4 = updateInterrupts(r0.stationId, Iterator(r2, r0, r1), new FakeGroupState).toList.head
+      doAsserts(output4)
+
+    }
+  }
+
+}
+
+class FakeGroupState extends GroupState[Interrupts]() {
+  override def exists: Boolean = true
+
+  override def get: Interrupts = ???
+
+  override def getOption: Option[Interrupts] = None
+
+  override def update(newState: Interrupts): Unit = {}
+
+  override def remove(): Unit = ???
+
+  override def hasTimedOut: Boolean = false
+
+  override def setTimeoutDuration(durationMs: Long): Unit = ???
+
+  override def setTimeoutDuration(duration: String): Unit = ???
+
+  override def setTimeoutTimestamp(timestampMs: Long): Unit = ???
+
+  override def setTimeoutTimestamp(timestampMs: Long, additionalDuration: String): Unit = ???
+
+  override def setTimeoutTimestamp(timestamp: Date): Unit = ???
+
+  override def setTimeoutTimestamp(timestamp: Date, additionalDuration: String): Unit = ???
+
+  override def getCurrentWatermarkMs(): Long = ???
+
+  override def getCurrentProcessingTimeMs(): Long = ???
 }
