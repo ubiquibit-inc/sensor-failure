@@ -49,10 +49,11 @@ trait RandomData {
 
   def rec: TextRecord = TextRecord(ts, i, s, f, f, f, f, f, f, f, f, f, f, f, f, f, f)
 
-  def testRecords(): Seq[TextRecord] = {
-    val ab = new ArrayBuffer[TextRecord](32)
-    (0 to 32).foreach {
-      ab :+ rec
+  def testRecords(len: Option[Int]): Seq[TextRecord] = {
+    val myLen = len.getOrElse(32)
+    val ab = ArrayBuffer.fill(myLen){null.asInstanceOf[TextRecord]}
+    (0 until myLen).foreach { x =>
+      ab(x) = rec
     }
     ab
   }

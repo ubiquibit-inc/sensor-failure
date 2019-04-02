@@ -21,9 +21,9 @@ import org.scalatest.FunSpec
 import scala.collection.mutable
 
 /**
-  * <WORK> (c) by <AUTHOR(S)>
+  * This work, (c) by jason@ubiquibit.com
   *
-  * <WORK> is licensed under a
+  * This work is licensed under a
   * Creative Commons Attribution-ShareAlike 4.0 International License.
   *
   * You should have received a copy of the license along with this
@@ -59,6 +59,33 @@ class InterruptsSpec extends FunSpec with RandomData {
       val keysOutTheWindow = instance.records.keys.filter(k => !sortedEvents.contains(k))
 
       keysOutTheWindow.foreach(k => assert(k.eventTime before sortedEvents.tail.head.eventTime))
+
+    }
+
+    it("isInterrupted when the second Set[String] is occupied for any frame") {
+
+      val textRecords = testRecords(Some(32)).sortWith(sortRecords)
+
+      val recs = textRecords.map{ tr =>
+        tr -> (Set(s), Set[String]())
+      }.toMap
+
+      val testInstance = Interrupts(s, recs)
+
+      assert(testInstance.isInterrupted)
+    }
+
+    it("isOnlineAgain when the first Set[String] is occupied for any frame"){
+
+      val textRecords = testRecords(Some(32)).sortWith(sortRecords)
+
+      val recs = textRecords.map{ tr =>
+        tr -> (Set[String](), Set(s))
+      }.toMap
+
+      val testInstnace = Interrupts(s, recs)
+
+      assert(testInstnace.isOnlineAgain)
 
     }
   }
