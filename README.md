@@ -18,9 +18,9 @@ Stations supply near-surface and underwater sensor arrays and report at fixed in
 
 Data are transmitted via [GOES](https://en.wikipedia.org/wiki/Geostationary_Operational_Environmental_Satellite) or [Iridium](https://en.wikipedia.org/wiki/Iridium_satellite_constellation) satellite networks to a ground facility in Wallops Island, Virginia. Feeds are aggregated hourly and published to a publicly-accessible web-share location.
 
-Where possible, NDBC supplements with feeds from assets outside of its direct jurisdiction, including ship observations.
-
 ![sensor data flow](img/NDBC-dataflow.png)
+
+Where possible, NDBC supplements with feeds from assets outside of its direct jurisdiction, including ship observations.
 
 #### Quickstart
 
