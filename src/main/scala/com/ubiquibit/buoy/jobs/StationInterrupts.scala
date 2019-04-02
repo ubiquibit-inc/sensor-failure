@@ -29,8 +29,6 @@ import scala.collection.mutable.ArrayBuffer
   */
 case class StationInterrupts(var stationId: String, var lastRecord: TextRecord, var interrupts: Set[String])
 
-case class StationInterruptsForFlatMap(var stationId: String, var records: ArrayBuffer[TextRecord], var interrupts: Set[String])
-
 /**
   * @param stationId event source
   * @param records map from individual event to (channel interrupts, re-activation events) on that tick
@@ -135,96 +133,6 @@ object StationInterrupts {
 
   }
 
-  def defaultInterruptsForFlatMap(stationId: String, records: ArrayBuffer[TextRecord]): StationInterruptsForFlatMap = StationInterruptsForFlatMap(stationId, records, Set())
-
-  def updateInterruptsForFlatMap(stationId: String,
-                                 recordsPerStation: Iterator[TextRecord],
-                                 state: GroupState[StationInterruptsForFlatMap]): Iterator[StationInterruptsForFlatMap] = {
-
-    if (state.hasTimedOut) {
-      val existing = state.get
-      state.remove()
-      existing.copy(records = new ArrayBuffer, interrupts = Set()) // release old pointers...
-      return Iterator()
-    }
-
-    val values = recordsPerStation.toList
-    if (sanityCheck) assert(values.forall(_.stationId == stationId))
-    val initialState: StationInterruptsForFlatMap = defaultInterruptsForFlatMap(stationId, new ArrayBuffer)
-    val newState: StationInterruptsForFlatMap = state.getOption.getOrElse(initialState) // records.size == 0
-
-    Log.fine(s"${values.size} input records : [$stationId]")
-
-    for (tr <- values) newState.records :+ tr
-
-    Log.finer(s"First record before sort: ${newState.records.headOption}")
-    newState.records = newState.records.sortWith(sortRecords)
-    Log.finer(s"First record after sort: ${newState.records.headOption}")
-
-    Log.finer(s"records size before dropRight: ${newState.records.size}")
-    if (newState.records.size > numRecords)
-      newState.records = newState.records.dropRight(newState.records.size - numRecords)
-    Log.finer(s"records size after dropRight: ${newState.records.size}")
-
-    Log.finer(s"Printing [$stationId] records soon...")
-    newState.records.zipWithIndex.foreach { case (v, idx) => Log.finest(s"$idx: $v") }
-    Log.finer(s"Printed [$stationId] records.")
-
-    /* TODO: Think!
-     *
-     * The following logic is problematic in that - while it captures all in-window
-     * interruptions, the way we are reporting GroupState back out through
-     * flatMapGroupsWithState doesn't really make it obvious which record caused the interrupt
-     * in the case of out-of-order record arrival.
-     *
-     * It may not be a problem to know that "last if possibly out of order record" caused an
-     * interrupt, but it may introduce downstream skew into ML models since we don't "rewind"
-     * the frame of reference to a set number of records per interruption.
-     */
-    if (newState.records.size > 1) {
-
-      Log.finest(s"More than 1 [$stationId] newState record")
-
-      val current = newState.interrupts
-
-      val off = newState.records
-        .sliding(2)
-        .map { case ArrayBuffer(a: TextRecord, b: TextRecord) => interrupts(a, b) }
-        .foldLeft(Set[String]())((r, c) => r.union(c))
-
-      val offSz = off.size
-      if (offSz > 0) Log.finer(s"""$offSz channel(s) interrupted: [$stationId] = $off""")
-
-      val on = newState.records
-        .sliding(2)
-        .map { case Seq(a: TextRecord, b: TextRecord) => onlineAgain(a, b) }
-        .foldLeft(Set[String]())((r, c) => r.union(c))
-
-      val onSz = on.size
-      if (onSz > 0) Log.fine(s"""$onSz channel(s) online again: [$stationId] = $on""")
-      if (onSz > 0 || offSz > 0) {
-        Log.finer(s"current = $current")
-        Log.finer(s"off -- on = ${off -- on}")
-      }
-
-      newState.interrupts = current ++ off -- on
-
-    }
-    // records.size == 1
-    else {
-      Log.finest(s"Just 1 [$stationId] newState record")
-      newState.interrupts = Set()
-    }
-
-    Log.finest(s"Printing [$stationId] interrupts soon...")
-    newState.interrupts.zipWithIndex.foreach { case (v, idx) => Log.finer(s"$idx: $v") }
-    Log.finest(s"Printed [$stationId] interrupts.")
-
-    state.update(newState)
-    Iterator(newState)
-
-  }
-
   def sortRecords(rec0: TextRecord, rec1: TextRecord): Boolean = {
     rec0.eventTime after rec1.eventTime
   }
@@ -256,21 +164,6 @@ object StationInterrupts {
     lastRecord = defaultRecord,
     interrupts = Set[String]()
   )
-
-  def updateAcrossEvents(stationId: String,
-                         inputs: Iterator[TextRecord],
-                         oldState: GroupState[StationInterrupts]): StationInterrupts = {
-
-    var state: StationInterrupts = if (oldState.exists) oldState.get else defaultState
-
-    for (input <- inputs) {
-      state = updateInterruptsSimple(state, input)
-      oldState.update(state)
-    }
-
-    state
-
-  }
 
   private def onlineAgain(previousRecord: TextRecord, currentRecord: TextRecord): Set[String] = {
     val result = ArrayBuffer.empty[String]
