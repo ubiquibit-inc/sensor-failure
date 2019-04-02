@@ -14,11 +14,13 @@ Sensor arrays are land-based, moored, or floating.
 ![moored](img/image003.png)
 ![floating](img/12m1.png)
 
-Stations support near-surface and underwater sensors and report at fixed intervals or continuously. 
+Stations support near-surface and underwater sensor arrays to report at fixed intervals or continuously. 
 
-Data are transmitted via [GOES](https://en.wikipedia.org/wiki/Geostationary_Operational_Environmental_Satellite) or [Iridium](https://en.wikipedia.org/wiki/Iridium_satellite_constellation) satellite networks to a ground facility in Wallops Island, Virginia. Feeds are aggregated hourly and published to a publicly-accessible web-share location.   
+Data are transmitted via [GOES](https://en.wikipedia.org/wiki/Geostationary_Operational_Environmental_Satellite) or [Iridium](https://en.wikipedia.org/wiki/Iridium_satellite_constellation) satellite networks to a ground facility in Wallops Island, Virginia. Feeds are aggregated hourly and published to a publicly-accessible web-share location.
 
-![sensor data flow](img/NDBC-seqdiagram.png)
+Where possible, NDBC supplements with station feeds from assets outside of its jurisdiction, including ship observations.
+
+![sensor data flow](img/NDBC-dataflow.png)
 
 #### Quickstart
 
