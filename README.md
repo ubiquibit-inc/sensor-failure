@@ -1,8 +1,8 @@
 # sensor-failure
 
-Uses Spark's Arbitrary Stateful Streaming to generate machine-learning sets from NOAA's buoy network.
+Anomaly detection in large sensor networks using Spark Arbitrary Stateful Streaming.
 
-Generates a trailing sequence of readings for each sensor interrupt. 
+This implementation saves off a small trailing data set for each sensor interrupt. 
 
 #### Background
 
