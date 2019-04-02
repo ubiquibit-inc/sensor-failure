@@ -59,12 +59,24 @@ We have data from ~950 WxStations reporting ~17 different output formats.
 
 - Apache Kafka (2.12-2.1.1 or similar)
 - Apache Spark (2.4.0-bin-hadoop-2.7 or similar)
-- sbt (version capable of compiling scala version 2.11.12 or similar)
+- sbt (1.2.7 or similar)
+- scala (2.11.12 or similar)
 
 ##### Clone & Build
 
 ```bash
-git clone https://github.com/jasonnerothin/sensor-failure.git
+
+% git clone https://github.com/jasonnerothin/sensor-failure.git
+% cd sensor-failure 
+% sbt assembly
+
+...
+
+[info] Packaging /Users/jason/scratch/sensor-failure/target/scala-2.11/sensorfailure-assembly-1.0.jar ...
+[info] Done packaging.
+[success] Total time: 31 s, completed Apr 1, 2019 4:05:45 PM
+[IJ]sbt:sensorfailure> 
+
 ```
 
 ##### Kafka & Redis
