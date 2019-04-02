@@ -31,6 +31,7 @@ libraryDependencies += "org.typelevel" %% "cats-core" % "1.4.0" withSources() wi
 libraryDependencies += "com.typesafe" % "config" % "1.3.2" withSources() withJavadoc()
 //libraryDependencies += "com.chuusai" %% "shapeless" % "2.3.3" withSources() withJavadoc()
 
+libraryDependencies += "redis.clients" % "jedis" % "3.0.1" withSources() withJavadoc()
 libraryDependencies += "net.debasishg" %% "redisclient" % "3.9" % Provided withSources() withJavadoc()
 libraryDependencies += "org.apache.spark" %% "spark-sql" % "2.4.0" % Provided withSources() withJavadoc()
 

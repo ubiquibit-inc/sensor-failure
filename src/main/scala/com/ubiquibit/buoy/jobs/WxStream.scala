@@ -16,7 +16,7 @@ package com.ubiquibit.buoy.jobs
 import java.util.logging.Logger
 
 import com.typesafe.config.{Config, ConfigFactory}
-import com.ubiquibit.{RandomElements, Spark, TopicNamer, Wiring}
+import com.ubiquibit._
 import com.ubiquibit.buoy._
 import com.ubiquibit.buoy.serialize.DefSer
 import org.apache.spark.SparkContext
@@ -83,6 +83,25 @@ class WxStream(env: {
     val interruptScanner: Dataset[Interrupts] = recordsByStationId.flatMapGroupsWithState(
       outputMode = OutputMode.Append,
       timeoutConf = GroupStateTimeout.NoTimeout)(func = updateInterrupts)
+
+//    val enc2: Encoder[Iterable[List[TextRecord]]] = Encoders.product[Iterable[List[TextRecord]]]
+
+    val redisInterrupts = interruptScanner
+      .filter(_.isInterrupted)
+      .flatMap(i => {
+        val allRecords = i.records.keys.toList.sortWith(sortRecords)
+        val interrupted = i.records.filter(_._2._1.nonEmpty)
+        for (irp <- interrupted) yield {
+          val rec = irp._1
+          val pos = allRecords.indexOf(rec)
+          allRecords.slice(pos, pos + StationInterrupts.numRecords)
+        }
+      })
+      .writeStream
+      .foreach(new InterruptWriter())
+      .start()
+
+    redisInterrupts.awaitTermination()
 
     // Interrupts(var stationId: String, var records: Map[TextRecord, (Set[String], Set[String])])
     val interruptedOutput = interruptScanner

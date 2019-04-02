@@ -26,13 +26,21 @@ Data are transmitted via [GOES](https://en.wikipedia.org/wiki/Geostationary_Oper
 
 Where possible, NDBC supplements with feeds from assets outside of its direct jurisdiction, including ship observations.
 
-#### Results
-
-TODO
-
 #### Architecture
 
 TODO 
+
+#### Results
+
+The following trace show sensor interrupts from weather station NPXN6: As the Stream is processed, the second to the last sensor sends a signal and then goes silent again.
+
+![interrupts](img/two-interrupts.png)
+
+Each time any monitored station stops sending a signal, a block of 16 records is processed by our streaming sinks.
+
+Spark supports a wide-variety of output sinks. This example uses a simple [ForeachWriter](src/main/scala/com/ubiquibit/buoy/jobs/InterruptWriter.scala) that writes to disk.
+
+For longer-term persistance, we write the output to Redis, where we can pick it up later from Machine Learning jobs.
 
 #### Nuts & Bolts
 
