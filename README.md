@@ -28,7 +28,7 @@ Where possible, NDBC supplements with feeds from assets outside of its direct ju
 
 #### Results
 
-The following trace shows sensor interrupts from weather station []NPXN6](https://www.ndbc.noaa.gov/station_page.php?station=npxn6): As the Stream is processed, the second to the last sensor sends a signal and then goes silent again.
+The following trace shows sensor interrupts from weather station [NPXN6](https://www.ndbc.noaa.gov/station_page.php?station=npxn6): As the Stream is processed, the second to the last sensor sends a signal and then goes silent again.
 
 ![interrupts](img/two-interrupts.png)
 
