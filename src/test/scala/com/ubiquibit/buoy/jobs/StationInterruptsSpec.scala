@@ -32,14 +32,19 @@ class StationInterruptsSpec extends FunSpec {
   val rand: scala.util.Random = new Random
 
   def f: Float = math.abs(rand.nextFloat())
+
   def nf: Float = Float.NaN
+
   def i: Int = math.abs(rand.nextInt)
+
   def s: String = s"str$i"
+
   def ts: Timestamp = {
     val stamp = new Timestamp(System.currentTimeMillis())
     Thread.sleep(10)
     stamp
   }
+
   def rec: TextRecord = TextRecord(ts, i, s, f, f, f, f, f, f, f, f, f, f, f, f, f, f)
 
   describe("StationInterrupts") {
@@ -79,6 +84,23 @@ class StationInterruptsSpec extends FunSpec {
       val instance = Interrupts(stationId, records = m.toMap)
 
       assert(instance.inWindow().records.size == 16)
+    }
+
+    it("returns the most recent 16 records inWindow") {
+      val m: mutable.Map[TextRecord, (Set[String], Set[String])] = mutable.Map()
+      (0 until 30).foreach { i => m += rec -> (Set(s), Set(s)) }
+
+      val instance = Interrupts(stationId, records = m.toMap)
+
+      val sortedEvents = m.keys.toList.sortWith(sortRecords)
+
+      // sorted latest to earliest
+      assert(sortedEvents.head.eventTime after sortedEvents.last.eventTime)
+
+      val keysOutTheWindow = instance.records.keys.filter( k=> !sortedEvents.contains(k))
+
+      keysOutTheWindow.foreach(k => assert(k.eventTime before sortedEvents.tail.head.eventTime))
+
     }
   }
 }
