@@ -20,13 +20,29 @@ import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.streaming.GroupState
 import org.scalatest.FunSpec
 
+import scala.collection.mutable
+import scala.util.Random
+
 class StationInterruptsSpec extends FunSpec {
 
+  val stationId = "myStationInLife"
+
+  import StationInterrupts._
+
+  val rand: scala.util.Random = new Random
+
+  def f: Float = math.abs(rand.nextFloat())
+  def nf: Float = Float.NaN
+  def i: Int = math.abs(rand.nextInt)
+  def s: String = s"str$i"
+  def ts: Timestamp = {
+    val stamp = new Timestamp(System.currentTimeMillis())
+    Thread.sleep(10)
+    stamp
+  }
+  def rec: TextRecord = TextRecord(ts, i, s, f, f, f, f, f, f, f, f, f, f, f, f, f, f)
+
   describe("StationInterrupts") {
-
-    import StationInterrupts._
-
-    val stationId = "myStationInLife"
 
     val rec0: TextRecord = TextRecord(new Timestamp(System.currentTimeMillis()), 0, stationId, 1F, 1F, 1F, 1F, 1F, 1F, 1F, 1F, 1F, 1F, 1F, 1F, 1F, 1F)
     Thread.sleep(1000)
@@ -37,7 +53,7 @@ class StationInterruptsSpec extends FunSpec {
     val defaultState = StationInterrupts.defaultState
     //    val defaultRec = defaultState.lastRecord
 
-    it("updateInterrupts should:") {
+    it("updateInterruptsSimple") {
 
       val result0 = updateInterruptsSimple(defaultState, rec0)
       assert(result0.interrupts.isEmpty, "have an empty default state")
@@ -53,4 +69,16 @@ class StationInterruptsSpec extends FunSpec {
 
   }
 
+  describe("Interrupts case class") {
+
+    it("has only 16 records in the window") {
+
+      val m: mutable.Map[TextRecord, (Set[String], Set[String])] = mutable.Map()
+      (0 until 30).foreach { i => m += rec -> (Set(s), Set(s)) }
+
+      val instance = Interrupts(stationId, records = m.toMap)
+
+      assert(instance.inWindow().records.size == 16)
+    }
+  }
 }
