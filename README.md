@@ -10,9 +10,9 @@ Generates a trailing sequence of readings for each sensor interrupt.
 
 Sensor arrays are land-based, moored, or floating.
 
-![land based](img/sbio1.jpg)
-![moored](img/image002.jpg)
-![floating](img/12m1.jpg)
+![land based](img/sbio1.png)
+![moored](img/image003.png)
+![floating](img/12m1.png)
 
 Stations support near-surface and underwater sensors and report at fixed intervals or continuously. 
 
