@@ -13,39 +13,20 @@
 
 package com.ubiquibit.buoy.jobs
 
-import java.sql.{Date, Timestamp}
+import java.sql.Timestamp
 
+import com.ubiquibit.RandomData
 import com.ubiquibit.buoy.TextRecord
-import org.apache.spark.sql.SparkSession
-import org.apache.spark.sql.streaming.GroupState
 import org.scalatest.FunSpec
 
 import scala.collection.mutable
 import scala.util.Random
 
-class StationInterruptsSpec extends FunSpec {
+class StationInterruptsSpec extends FunSpec with RandomData {
 
   val stationId = "myStationInLife"
 
   import StationInterrupts._
-
-  val rand: scala.util.Random = new Random
-
-  def f: Float = math.abs(rand.nextFloat())
-
-  def nf: Float = Float.NaN
-
-  def i: Int = math.abs(rand.nextInt)
-
-  def s: String = s"str$i"
-
-  def ts: Timestamp = {
-    val stamp = new Timestamp(System.currentTimeMillis())
-    Thread.sleep(10)
-    stamp
-  }
-
-  def rec: TextRecord = TextRecord(ts, i, s, f, f, f, f, f, f, f, f, f, f, f, f, f, f)
 
   describe("StationInterrupts") {
 
@@ -79,7 +60,7 @@ class StationInterruptsSpec extends FunSpec {
     it("has only 16 records in the window") {
 
       val m: mutable.Map[TextRecord, (Set[String], Set[String])] = mutable.Map()
-      (0 until 30).foreach { i => m += rec -> (Set(s), Set(s)) }
+      (0 until 30).foreach { _ => m += rec -> (Set(s), Set(s)) }
 
       val instance = Interrupts(stationId, records = m.toMap)
 
@@ -88,7 +69,7 @@ class StationInterruptsSpec extends FunSpec {
 
     it("returns the most recent 16 records inWindow") {
       val m: mutable.Map[TextRecord, (Set[String], Set[String])] = mutable.Map()
-      (0 until 30).foreach { i => m += rec -> (Set(s), Set(s)) }
+      (0 until 30).foreach { _ => m += rec -> (Set(s), Set(s)) }
 
       val instance = Interrupts(stationId, records = m.toMap)
 
