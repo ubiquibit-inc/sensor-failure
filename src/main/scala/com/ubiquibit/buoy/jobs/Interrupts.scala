@@ -63,7 +63,7 @@ case class Interrupts(var stationId: String, var records: Map[TextRecord, (Set[S
     Interrupts(stationId, records.filterKeys(k=> !analysisWindowKeys.contains(k)))
   }
 
-  val analysisWindowKeys = records.keys.toList.sortWith(sortRecords).dropRight(records.size - processRecordsCnt)
+  private val analysisWindowKeys = records.keys.toList.sortWith(sortRecords).dropRight(records.size - processRecordsCnt)
 
 }
 
