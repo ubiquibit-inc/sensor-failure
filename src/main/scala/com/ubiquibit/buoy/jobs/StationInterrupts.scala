@@ -96,7 +96,11 @@ object StationInterrupts {
     procBuffer ++= retained.dropRight(retained.size - processRecordsCnt)
     Log.finer(s"Sizes >>> procBuffer [${procBuffer.size}]")
 
-    val last = procBuffer.last -> (Set[String](), Set[String]())
+    val last = {
+      if( right.nonEmpty )
+        procBuffer.last -> (interrupts(right.head, procBuffer.last), onlineAgain(right.head, procBuffer.last))
+      else procBuffer.last -> (Set[String](), Set[String]())
+    }
     val processed = procBuffer.sliding(2)
       .map { case mutable.Buffer(a: TextRecord, b: TextRecord) => {
         a -> ( interrupts(b, a), onlineAgain(b, a))} }

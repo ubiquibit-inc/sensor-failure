@@ -38,7 +38,7 @@ class InterruptsSpec extends FunSpec with RandomData {
     it("has only 16 records in the window") {
 
       val m: mutable.Map[TextRecord, (Set[String], Set[String])] = mutable.Map()
-      (0 until 30).foreach { _ => m += rec -> (Set(s), Set(s)) }
+      (0 until 30).foreach { _ => m += rec() -> (Set(s), Set(s)) }
 
       val instance = Interrupts(stationId, records = m.toMap)
 
@@ -47,7 +47,7 @@ class InterruptsSpec extends FunSpec with RandomData {
 
     it("returns the most recent 16 records inWindow") {
       val m: mutable.Map[TextRecord, (Set[String], Set[String])] = mutable.Map()
-      (0 until 30).foreach { _ => m += rec -> (Set(s), Set(s)) }
+      (0 until 30).foreach { _ => m += rec() -> (Set(s), Set(s)) }
 
       val instance = Interrupts(stationId, records = m.toMap)
 
@@ -77,7 +77,7 @@ class InterruptsSpec extends FunSpec with RandomData {
 
     it("isOnlineAgain when the first Set[String] is occupied for any frame"){
 
-      val textRecords = testRecords(Some(32)).sortWith(sortRecords)
+      val textRecords = testRecords().sortWith(sortRecords)
 
       val recs = textRecords.map{ tr =>
         tr -> (Set[String](), Set(s))

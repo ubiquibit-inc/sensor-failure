@@ -47,13 +47,14 @@ trait RandomData {
     stamp
   }
 
-  def rec: TextRecord = TextRecord(ts, i, s, f, f, f, f, f, f, f, f, f, f, f, f, f, f)
+  def rec(stationId: Option[String] = Some(s)): TextRecord =
+    TextRecord(ts, i, stationId.getOrElse(s), f, f, f, f, f, f, f, f, f, f, f, f, f, f)
 
-  def testRecords(len: Option[Int]): Seq[TextRecord] = {
+  def testRecords(len: Option[Int] = Some(32), stationId: Option[String] = Some(s)): Seq[TextRecord] = {
     val myLen = len.getOrElse(32)
     val ab = ArrayBuffer.fill(myLen){null.asInstanceOf[TextRecord]}
     (0 until myLen).foreach { x =>
-      ab(x) = rec
+      ab(x) = rec(stationId)
     }
     ab
   }

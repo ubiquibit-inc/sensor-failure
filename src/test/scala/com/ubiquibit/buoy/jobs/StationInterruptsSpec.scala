@@ -57,9 +57,11 @@ class StationInterruptsSpec extends FunSpec with RandomData {
 
     it("returns text record input inside of the output") {
 
-      val r0 = rec
-      val r1 = rec
-      val r2 = rec
+      val stationId = s
+
+      val r0 = rec(Some(stationId))
+      val r1 = rec(Some(stationId))
+      val r2 = rec(Some(stationId))
 
       val output = updateInterrupts(s, Iterator(r0, r1, r2), new FakeGroupState()).toList
 
@@ -71,7 +73,7 @@ class StationInterruptsSpec extends FunSpec with RandomData {
 
     it("returns an interrupt notification for interrupted records") {
 
-      val r0 = rec
+      val r0 = rec(None)
       val r1 = TextRecord(ts, i, r0.stationId, windDirection = Float.NaN, f, f, f, f, f, f, f, f, f, f, f, f, f)
       val r2 = TextRecord(ts, i, r0.stationId, f, f, f, f, f, f, f, f, f, f, f, f, f, f)
 
@@ -100,6 +102,19 @@ class StationInterruptsSpec extends FunSpec with RandomData {
       doAsserts(output4)
 
     }
+
+    it("handles the boundary case where there are exactly 16 records"){
+
+      val stationId = s
+      val testRecs = testRecords(Some(16), Some(stationId)).sortWith(sortRecords)
+
+      val output = updateInterrupts(s, testRecs.iterator, new FakeGroupState).toList.head
+
+      output.records(testRecs.last)._1.isEmpty
+      output.records(testRecs.last)._2.isEmpty
+
+    }
+
   }
 
 }
