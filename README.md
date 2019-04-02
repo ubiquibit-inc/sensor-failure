@@ -27,6 +27,7 @@ Where possible, NDBC supplements with feeds from assets outside of its direct ju
 #####  download buoy data 
 
 ```bash 
+# from within `BASEDIR`...
 % mkdir data && cd data ;
 % wget -r -np -R "index.html*" https://www.ndbc.noaa.gov/data/realtime2/ ; 
 
@@ -68,6 +69,9 @@ We have data from ~950 WxStations reporting ~17 different output formats.
 
 % git clone https://github.com/jasonnerothin/sensor-failure.git
 % cd sensor-failure 
+```
+- edit [application.properties](src/main/resources/application.properties)
+```bash
 % sbt assembly
 
 ...
@@ -81,9 +85,9 @@ We have data from ~950 WxStations reporting ~17 different output formats.
 
 ##### Kafka & Redis
 
-- edit [application.properties](src/main/resources/application.properties)
 - Run Redis (on Docker)
 ````bash
+# FROM `BASEDIR`...
 cd bash
 ./start-redis.sh
 ````
