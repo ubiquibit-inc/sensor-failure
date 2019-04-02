@@ -1,12 +1,12 @@
 # sensor-failure
 
-Anomaly detection in large sensor networks using Spark Arbitrary Stateful Streaming.
+*anomaly detection in large sensor networks*
 
-This implementation saves off a small trailing data set for each sensor interrupt.
+We demonstrate real-time processing of streaming sensor data with persistence for machine learning.
 
-![](img/results.png)
+![basic flow](img/buoy-flow.png) 
 
-The design applies to many IoT use cases.
+The system implements Spark Arbitrary Stateful Processing to consume Kafka feeds. Upon detection of interrupt, a trailing event stream is persisted in Redis for follow-on ML analysis.
 
 #### Background
 
