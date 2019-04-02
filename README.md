@@ -111,6 +111,10 @@ cd bash
 
 # before
 
+./redis-login.sh
+
+...
+
 redis:6379> hmget "stationId:46082" "TXT"
 1) "DOWNLOADED"
 
