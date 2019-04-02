@@ -26,6 +26,22 @@ import com.ubiquibit.buoy.TextRecord
   *
   * @param stationId event source
   * @param records map from individual event to (channel interrupts, re-activation events) on that tick
+  *
+  * Provides information about a batch of [[TextRecord]]s: Whether each one, in eventTime sequence, has
+  * had a sensor channel (e.g. windDirection) stop reporting or come online again.
+  *
+  * Properly used (by [[StationInterrupts]]), instances of this class carry with them a number of records.
+  * The first [[StationInterrupts.numRecords]] [[TextRecord]]s fall into the "analysis window". That is,
+  * they are checked vs their immediate predecessor for sensor channel interrupts and channel restorations.
+  *
+  * In addition, a trailing log of additional [[TextRecord]]s is supplied (for ML-purposes). These
+  * "backlog window" records do not have interrupt and restorations calculated.
+  *
+  * Be advised that records are in a [[Map]], and therefore are returned in arbitrary order.
+  *
+  * For a given record-in-time, each interrupted channel shows up in the first [[Set]]. Channels that
+  * come online again at that time are recorded in the second [[Set]].
+  *
   */
 case class Interrupts(var stationId: String, var records: Map[TextRecord, (Set[String], Set[String])]) {
 
@@ -36,10 +52,18 @@ case class Interrupts(var stationId: String, var records: Map[TextRecord, (Set[S
 
   def isOnlineAgain: Boolean = records.exists(_._2._2.nonEmpty)
 
+  /**
+    * @return unordered results from the analysis window
+    */
   def inWindow(): Interrupts = {
-    val keepers = records.keys.toList.sortWith(sortRecords).dropRight(records.size - processRecordsCnt)
-    Interrupts(stationId, records.filterKeys(k=> keepers.contains(k)))
+    Interrupts(stationId, records.filterKeys(k=> analysisWindowKeys.contains(k)))
   }
+
+  def inBacklog(): Interrupts = {
+    Interrupts(stationId, records.filterKeys(k=> !analysisWindowKeys.contains(k)))
+  }
+
+  val analysisWindowKeys = records.keys.toList.sortWith(sortRecords).dropRight(records.size - processRecordsCnt)
 
 }
 
