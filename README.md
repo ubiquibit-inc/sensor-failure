@@ -137,13 +137,18 @@ redis:6379> hmget "stationId:46082" "TXT"
 
 # Loads hard-coded Station 46082...
 
-./bin/spark-submit --class "com.ubiquibit.buoy.jobs.setup.InitKafkaImpl" --master "spark://Flob.local:7077" --deploy-mode cluster --executor-cores 4 --packages "org.apache.spark:spark-sql-kafka-0-10_2.11:2.4.0" "/Users/jason/scratch/sensor-failure/target/scala-2.11/sensorfailure-assembly-1.0.jar"
+${SPARK_HOME}/bin/spark-submit --class "com.ubiquibit.buoy.jobs.setup.InitKafkaImpl" --master "spark://${SPARK_HOST}:7077" --deploy-mode cluster --executor-cores 2 --packages "org.apache.spark:spark-sql-kafka-0-10_2.11:2.4.0" "/Users/jason/scratch/sensor-failure/target/scala-2.11/sensorfailure-assembly-1.0.jar"
+19/04/02 09:06:23 WARN NativeCodeLoader: Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
 
 # OR loads a station of your choosing...
 
-./bin/spark-submit --class "com.ubiquibit.buoy.jobs.setup.InitKafkaImpl" --master "spark://Flob.local:7077" --deploy-mode cluster --executor-cores 4 --packages "org.apache.spark:spark-sql-kafka-0-10_2.11:2.4.0" "/Users/jason/scratch/sensor-failure/Target/scala-2.11/sensorfailure-assembly-1.0.jar" "BZST2"
+${SPARK_HOME}/bin/spark-submit --class "com.ubiquibit.buoy.jobs.setup.InitKafkaImpl" --master "spark://${SPARK_HOST}:7077" --deploy-mode cluster --executor-cores 2 --packages "org.apache.spark:spark-sql-kafka-0-10_2.11:2.4.0" "/Users/jason/scratch/sensor-failure/Target/scala-2.11/sensorfailure-assembly-1.0.jar" "BZST2"
 
-# verify by checking in Redis:
+# after
+
+./redis-login.sh
+
+...
 
 redis:6379> hmget "stationId:46082" "TXT"
 1) "KAFKALOADED"
@@ -158,7 +163,7 @@ redis:6379> hmget "stationId:46082" "TXT"
 ##### Run WxStream
 
 ```bash
-/bin/spark-submit --class "com.ubiquibit.buoy.jobs.WxStream" --master "spark://Flob.local:7077" --deploy-mode cluster --executor-cores 4 --packages "org.apache.spark:spark-sql-kafka-0-10_2.11:2.4.0" "/Users/jason/scratch/sensor-failure/target/scala-2.11/feedkafka-assembly-1.0.jar"
+${SPARK_HOME}/bin/spark-submit --class "com.ubiquibit.buoy.jobs.WxStream" --master "spark://${SPARK_HOST}:7077" --deploy-mode cluster --executor-cores 4 --packages "org.apache.spark:spark-sql-kafka-0-10_2.11:2.4.0" "/Users/jason/scratch/sensor-failure/target/scala-2.11/sensorfailure-assembly-1.0.jar"
 ``` 
 
 > check the driver's stdout log and [SparkUI](http://localhost:8080)
