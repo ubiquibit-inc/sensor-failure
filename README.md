@@ -34,7 +34,7 @@ Where possible, NDBC supplements with feeds from assets outside of its direct ju
 
 ```
 
-We have data from 950 WxStations reporting 17 different formats. 
+We have data from ~950 WxStations reporting ~17 different output formats. 
 
 ```bash
 # Adcp files 29
@@ -55,6 +55,18 @@ We have data from 950 WxStations reporting 17 different formats.
 # Text files 799
 ```
 
+##### Pre-requisites
+
+- Apache Kafka (2.12-2.1.1 or similar)
+- Apache Spark (2.4.0-bin-hadoop-2.7 or similar)
+- sbt (version capable of compiling scala version 2.11.12 or similar)
+
+##### Clone & Build
+
+```bash
+git clone https://github.com/jasonnerothin/sensor-failure.git
+```
+
 ##### Kafka & Redis
 
 - edit [application.properties](src/main/resources/application.properties)
@@ -65,7 +77,7 @@ cd bash
 ````
 - run [InitRedisImpl](src/main/scala/com/ubiquibit/buoy/jobs/setup/InitKafka.scala) 
 
-- Install and start Kafka (version-compatible with Scala 2.11)
+- Install and start Kafka 
 
 ```bash 
 # edit, then run...
