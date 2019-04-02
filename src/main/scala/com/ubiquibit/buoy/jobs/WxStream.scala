@@ -99,14 +99,13 @@ class WxStream(env: {
     val onlineAgainOut = interruptScanner
       .filter(_.isOnlineAgain)
       .map(_.inWindow())
-      .withColumn("online", lit("ONLINE"))
+      .withColumn("online", lit("ONLINE-AGAIN"))
       .writeStream
       .format("console")
       .option("truncate", "false")
       .trigger(Trigger.ProcessingTime(8.second))
       .outputMode(OutputMode.Append)
       .start
-
 
     interruptedOutput.awaitTermination()
     onlineAgainOut.awaitTermination()
