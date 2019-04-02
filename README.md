@@ -78,6 +78,7 @@ We have data from ~950 WxStations reporting ~17 different output formats.
 - Apache Spark (2.4.0-bin-hadoop-2.7 or similar)
 - sbt (1.2.7 or similar)
 - scala (2.11.12 or similar)
+- Redis (run via Docker - below)
 
 ##### Clone & Build
 
