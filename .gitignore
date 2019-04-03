@@ -5,7 +5,7 @@ data/*
 feedkafka/target
 feedkafka/project
 **/*.iml
-project
+project/target
 target
 .idea
 **/.DS_Store
