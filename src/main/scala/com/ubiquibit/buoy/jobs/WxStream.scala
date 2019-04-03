@@ -84,9 +84,7 @@ class WxStream(env: {
       outputMode = OutputMode.Append,
       timeoutConf = GroupStateTimeout.NoTimeout)(func = updateInterrupts)
 
-//    val enc2: Encoder[Iterable[List[TextRecord]]] = Encoders.product[Iterable[List[TextRecord]]]
-
-    val redisInterrupts = interruptScanner
+    val orcOut = interruptScanner
       .filter(_.isInterrupted)
       .flatMap(i => {
         val allRecords = i.records.keys.toList.sortWith(sortRecords)
@@ -98,10 +96,19 @@ class WxStream(env: {
         }
       })
       .writeStream
-      .foreach(new InterruptWriter())
+      .format("orc")
+      .option("path", conf.getString("orc.output.path"))
+      .foreachBatch { (batchDs: Dataset[List[TextRecord]], batchId: Long) =>
+        val stationId = batchDs.first.head.stationId
+        batchDs.persist()
+        batchDs.write
+          .format("orc")
+          .option("path", s"${conf.getString("orc.output.path")}/$stationId}/")
+          .save()
+      }
       .start()
 
-    redisInterrupts.awaitTermination()
+    orcOut.awaitTermination()
 
     // Interrupts(var stationId: String, var records: Map[TextRecord, (Set[String], Set[String])])
     val interruptedOutput = interruptScanner

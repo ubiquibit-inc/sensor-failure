@@ -2,11 +2,11 @@
 
 *interrupt detection in large sensor networks*
 
-We demonstrate real-time processing of streaming sensor data with persistence for machine learning.
+In large sensor networks, event interruption is common. We monitor a large, globally-distributed sensor network in realtime and store blocks of the *preceeding* event stream for later analysis.     
 
 ![basic flow](img/buoy-flow.png) 
 
-The system implements Spark Arbitrary Stateful Processing to consume Kafka feeds. Upon detection of interrupt, a trailing event stream is persisted in Redis for ML analyses.
+The implementation uses Spark Arbitrary Stateful Processing to consume from Kafka and stores results in Apache ORC.
 
 #### Background
 
@@ -24,29 +24,35 @@ Data are transmitted via [GOES](https://en.wikipedia.org/wiki/Geostationary_Oper
 
 ![sensor data flow](img/NDBC-dataflow.png)
 
-Where possible, NDBC supplements with feeds from assets outside of its direct jurisdiction, including ship observations.
+NDBC's realtime [web-share](https://www.ndbc.noaa.gov/data/realtime2/) is updated hourly - "usually by 15 minutes after the hour". Data files store a 45-day history for a given station and are updated at the *top* of the file. 
+
+For example:
+
+![topoffile](img/head.png)
+
+NDBC supplements with feeds from assets outside of its direct jurisdiction, including ship observations.
 
 #### Results
 
-The following trace shows sensor interrupts from weather station [NPXN6](https://www.ndbc.noaa.gov/station_page.php?station=npxn6): As the Stream is processed, the second to the last sensor sends a signal and then goes silent again.
+This trace shows sensor interrupts from weather station [NPXN6](https://www.ndbc.noaa.gov/station_page.php?station=npxn6): As the Stream is processed, the highlighted feed shows a pressure sensor sending a signal that goes silent.
 
 ![interrupts](img/two-interrupts.png)
 
-Each time any monitored station stops sending a signal, a block of 16 records is processed by our streaming sinks.
+Each time any monitored sensor stops sending a signal, a block of 16 records is processed by our streaming sinks.
 
-Spark supports a wide-variety of output sinks. The depicted example uses a simple [ForeachWriter](src/main/scala/com/ubiquibit/buoy/jobs/InterruptWriter.scala) that writes to disk.
+The depicted example is a dev view, and uses a simple [ForeachWriter](src/main/scala/com/ubiquibit/buoy/jobs/InterruptWriter.scala) that writes records to disk.
 
-For longer-term persistance, we write the output to Apache ORC, where we can pick it up later from Machine Learning jobs.
+In the actual implementation, we output to the Apache ORC format. (See: [Output](#output) for more info)
 
-#### Nuts & Bolts
+#### Implementation Overview
 
 ##### WxStream
 
 The heart of the implementation takes place in the WxStream Spark Application. 
 
-Each WxStream consumes from [a number of station topics](src/main/scala/com/ubiquibit/buoy/jobs/WxStream.scala#L71) then uses [flatMapGroupWithState](src/main/scala/com/ubiquibit/buoy/jobs/WxStream.scala#L83) to *splay out* execution to the cluster.
+WxStream consumes from [Kafka topics](src/main/scala/com/ubiquibit/buoy/jobs/WxStream.scala#L71) and then *splays out* execution using [flatMapGroupWithState](src/main/scala/com/ubiquibit/buoy/jobs/WxStream.scala#L83).
 
-StationInterrupts' [updateInterrupts function](src/main/scala/com/ubiquibit/buoy/jobs/StationInterrupts.scala#L44) calculates interrupts and "onlineAgain" for each consecutive set of records.
+StationInterrupts' [updateInterrupts function](src/main/scala/com/ubiquibit/buoy/jobs/StationInterrupts.scala#L44) calculates "interrupts" and "onlineAgain" for each consecutive pair of records:
 
 ![core processing](img/processed.png)
 
@@ -54,29 +60,35 @@ Together with Spark's arbitrary stateful processing engine, the algorithm is cap
 
 ##### Input
 
-NDBC's realtime [web-share](https://www.ndbc.noaa.gov/data/realtime2/) is updated hourly - "usually by 15 minutes after the hour". Data files store a 45-day history for a given station and are updated at the *top* of the file. 
+Kafka can be fed in a large batch or slowly, over time. 
 
-For example:
+Use `InitKafkaImpl` to batch load historical data. It needs to be run one time per station. (Instructions below.) 
 
-![topoffile](img/head.png)
-
-Two runtime options are provided for queuing up data for `WxStream`: `LiveKafkaFeeder` and `InitKafkaImpl` 
-
-`InitKafkaImpl` is a Spark application that processes downloaded data files and writes them to Kafka. It needs to be run one time per station. 
-
-If you want to do retrospective analysis for a few stations, this is a good option. 
-
-`LiveKafkaFeeder` is a JVM application that checks for changes to the files on the web-share. As changes are detected, it will write them to Kafka.
-
-This is a good option if you want to run `WxStream` for extended periods of time.
+Use `LiveKafkaFeeder` to keep Kafka up-to-date. It checks the web-share for recent changes. (Instructions below.)
 
 You may use either one, but it's probably best to start with InitKafkaImpl even in the case that you want to run the live feeder.
 
 ##### Output
 
-TODO 
+ORC is a standalone Apache project and is supported natively by Apache Spark. It provides columnar storage (like Parquet) and Snappy compression. The format widely used in Big Data and Machine Learning work flows. 
+
+This diagram is a partial output of the hive command, executed against the output files.
+
+![orc output](img/OrcOutput.png)
 
 #### Howto
+
+The remainder of this document provides steps for the do it yourself crowd.  
+
+##### Howto Pre-requisites
+
+These tools work to run the demo
+
+- Apache Spark (2.4.0-bin-hadoop-2.7) [download](https://spark.apache.org/downloads.html)[instructions](https://spark.apache.org/docs/latest/)
+- Apache Kafka (2.12-2.1.1) [download](https://kafka.apache.org/downloads)[instructions](https://kafka.apache.org/quickstart)
+- sbt (1.2.7) [download](https://www.scala-sbt.org/download.html)
+- scala (2.11.12) [download](https://www.scala-lang.org/download/)
+- Redis (run via Docker) (instructions below)
 
 #####  download buoy data 
 
@@ -89,7 +101,7 @@ TODO
 
 ```
 
-We have data from ~950 WxStations reporting ~17 different output formats. 
+You should have data from ~950 WxStations reporting ~17 different output formats. 
 
 ```bash
 # Adcp files 29
@@ -109,14 +121,6 @@ We have data from ~950 WxStations reporting ~17 different output formats.
 # Swr2 files 149
 # Text files 799
 ```
-
-##### Pre-requisites
-
-- Apache Kafka (2.12-2.1.1 or similar)
-- Apache Spark (2.4.0-bin-hadoop-2.7 or similar)
-- sbt (1.2.7 or similar)
-- scala (2.11.12 or similar)
-- Redis (run via Docker - below)
 
 ##### Clone & Build
 
