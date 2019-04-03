@@ -70,15 +70,19 @@ You may use either one, but it's probably best to start with InitKafkaImpl even 
 
 ##### Output
 
-ORC is a standalone Apache project and is supported natively by Apache Spark. It provides columnar storage (like Parquet) and Snappy compression. The format widely used in Big Data and Machine Learning work flows. 
+ORC is a standalone Apache project and is supported natively by Apache Spark. It provides columnar storage (like Parquet) and Snappy compression. The format is widely used in Big Data and Machine Learning work flows. 
 
 This diagram is a partial output of the hive command, executed against the output files.
 
 ![orc output](img/OrcOutput.png)
 
+(It is interesting to note that a number of chanels *never* report data.)
+
+At this point, our Streaming Data are ready for analysis workflows!
+
 #### Howto
 
-The remainder of this document provides steps for the do it yourself crowd.  
+The remainder of this document provides steps to do it yourself  
 
 ##### Howto Pre-requisites
 
