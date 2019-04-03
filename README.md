@@ -2,7 +2,9 @@
 
 *interrupt detection in large sensor networks*
 
-In large sensor networks, event interruption is common. We monitor a large, globally-distributed sensor network in realtime and store blocks of the *preceeding* event stream for later analysis.     
+#### OVERVIEW
+
+Event stream interruption is a common occurrence in sensor networks. We monitor a large, globally-distributed sensor network in realtime and store blocks of the *preceeding* event stream for later analysis.     
 
 ![basic flow](img/buoy-flow.png) 
 
