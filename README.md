@@ -36,7 +36,7 @@ Each time any monitored station stops sending a signal, a block of 16 records is
 
 Spark supports a wide-variety of output sinks. The depicted example uses a simple [ForeachWriter](src/main/scala/com/ubiquibit/buoy/jobs/InterruptWriter.scala) that writes to disk.
 
-For longer-term persistance, we write the output to Redis, where we can pick it up later from Machine Learning jobs.
+For longer-term persistance, we write the output to Apache ORC, where we can pick it up later from Machine Learning jobs.
 
 #### Nuts & Bolts
 
