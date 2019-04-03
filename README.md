@@ -88,8 +88,8 @@ The remainder of this document provides steps to do it yourself
 
 These tools work to run the demo
 
-- Apache Spark (2.4.0-bin-hadoop-2.7) [download](https://spark.apache.org/downloads.html)[instructions](https://spark.apache.org/docs/latest/)
-- Apache Kafka (2.12-2.1.1) [download](https://kafka.apache.org/downloads)[instructions](https://kafka.apache.org/quickstart)
+- Apache Spark (2.4.0-bin-hadoop-2.7) [download](https://spark.apache.org/downloads.html) - [instructions](https://spark.apache.org/docs/latest/)
+- Apache Kafka (2.12-2.1.1) [download](https://kafka.apache.org/downloads) - [instructions](https://kafka.apache.org/quickstart)
 - sbt (1.2.7) [download](https://www.scala-sbt.org/download.html)
 - scala (2.11.12) [download](https://www.scala-lang.org/download/)
 - Redis (run via Docker) (instructions below)
