@@ -1,6 +1,6 @@
 # sensor-failure
 
-*anomaly detection in large sensor networks*
+*interrupt detection in large sensor networks*
 
 We demonstrate real-time processing of streaming sensor data with persistence for machine learning.
 
