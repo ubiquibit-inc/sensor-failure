@@ -8,7 +8,7 @@ In large sensor networks, event interruption is common. We monitor a large, glob
 
 The implementation uses Spark Arbitrary Stateful Processing to consume from Kafka and stores results in Apache ORC.
 
-#### Background
+#### BACKGROUND
 
 [NOAA](https://www.noaa.gov/) manages a world-wide network of weather stations under auspices of the [National Data Buoy Center](https://www.ndbc.noaa.gov/). 
 
@@ -32,7 +32,7 @@ For example:
 
 NDBC supplements with feeds from assets outside of its direct jurisdiction, including ship observations.
 
-#### Results
+#### RESULTS
 
 This trace shows sensor interrupts from weather station [NPXN6](https://www.ndbc.noaa.gov/station_page.php?station=npxn6): As the Stream is processed, the highlighted feed shows a pressure sensor sending a signal that goes silent.
 
@@ -44,13 +44,13 @@ The depicted example is a dev view, and uses a simple [ForeachWriter](src/main/s
 
 In the actual implementation, we output to the Apache ORC format. (See: [Output](#output) for more info)
 
-#### Implementation Overview
+#### IMPLEMENTATION
 
 ##### WxStream
 
-The heart of the implementation takes place in the WxStream Spark Application. 
+The WxStream Spark Application is where the action happens. 
 
-WxStream consumes from [Kafka topics](src/main/scala/com/ubiquibit/buoy/jobs/WxStream.scala#L71) and then *splays out* execution using [flatMapGroupWithState](src/main/scala/com/ubiquibit/buoy/jobs/WxStream.scala#L83).
+WxStream consumes from one or more Station [Kafka topics](src/main/scala/com/ubiquibit/buoy/jobs/WxStream.scala#L71) and then *splays out* execution using [flatMapGroupWithState](src/main/scala/com/ubiquibit/buoy/jobs/WxStream.scala#L83).
 
 StationInterrupts' [updateInterrupts function](src/main/scala/com/ubiquibit/buoy/jobs/StationInterrupts.scala#L44) calculates "interrupts" and "onlineAgain" for each consecutive pair of records:
 
