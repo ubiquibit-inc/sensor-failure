@@ -8,7 +8,7 @@ Event stream interruption is a common occurrence in sensor networks. We monitor 
 
 ![basic flow](img/buoy-flow.png) 
 
-The implementation uses Spark Arbitrary Stateful Processing to consume from Kafka and stores results in Apache ORC.
+The implementation uses Spark Arbitrary Stateful Streaming to consume from Kafka and stores results in Apache ORC.
 
 #### BACKGROUND
 
