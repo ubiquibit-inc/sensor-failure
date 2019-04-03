@@ -40,7 +40,7 @@ This trace shows sensor interrupts from weather station [NPXN6](https://www.ndbc
 
 Each time any monitored sensor stops sending a signal, a block of 16 records is processed by our streaming sinks.
 
-The depicted example is a dev view, and uses a simple [ForeachWriter](src/main/scala/com/ubiquibit/buoy/jobs/InterruptWriter.scala) that writes records to disk.
+The depicted example is a dev view, and uses a simple [ForeachWriter](src/main/scala/com/ubiquibit/buoy/jobs/InterruptWriter.scala) to writes records to disk.
 
 In the actual implementation, we output to the Apache ORC format. (See: [Output](#output) for more info)
 
@@ -56,7 +56,7 @@ StationInterrupts' [updateInterrupts function](src/main/scala/com/ubiquibit/buoy
 
 ![core processing](img/processed.png)
 
-Together with Spark's arbitrary stateful processing engine, the algorithm is capable of handling out-of-order event arrivals, record timeouts (to preserve memory), and scales out to support arbitrarily large sensor networks.
+Together with Spark's arbitrary stateful processing engine, the algorithm is capable of handling out-of-order event arrivals, record timeouts (to preserve memory), and failure resilience. The design scales out to support arbitrarily large networks.
 
 ##### Input
 
@@ -70,21 +70,21 @@ You may use either one, but it's probably best to start with InitKafkaImpl even 
 
 ##### Output
 
-ORC is a standalone Apache project and is supported natively by Apache Spark. It provides columnar storage (like Parquet) and Snappy compression. The format is widely used in Big Data and Machine Learning work flows. 
+ORC is a standalone Apache project and is supported natively by Apache Spark. It provides columnar storage (like Parquet) and Snappy compression. The format is widely used in Big Data and Machine Learning. 
 
-This diagram is a partial output of the hive command, executed against the output files.
+Here is a partial output of the hive command, executed against the output directory:
 
 ![orc output](img/OrcOutput.png)
 
 (It is interesting to note that a number of chanels *never* report data.)
 
-At this point, our Streaming Data are ready for analysis workflows!
+At this point, our Streaming Data have been ETL'd and are ready for OLAP!
 
-#### Howto
+#### HOWTO
 
-The remainder of this document provides steps to do it yourself  
+The remainder of this document provides steps to do it yourself.  
 
-##### Howto Pre-requisites
+##### Pre-requisites for howto
 
 These tools work to run the demo
 
@@ -131,6 +131,7 @@ You should have data from ~950 WxStations reporting ~17 different output formats
 ```bash
 
 % git clone https://github.com/jasonnerothin/sensor-failure.git
+% git checkout data-processing
 % cd sensor-failure 
 ```
 - edit [application.properties](src/main/resources/application.properties)
