@@ -13,13 +13,15 @@
 
 package com.ubiquibit.buoy.parse
 
-import java.io.{File, PrintWriter}
+import java.io._
 import java.nio.file.{Files, Path}
 
 import com.ubiquibit._
 import com.ubiquibit.buoy.{CManId, StationId, TextRecord}
 import org.apache.spark.sql.{Row, SparkSession}
 import org.scalatest.BeforeAndAfter
+
+import scala.io.{BufferedSource, Source}
 
 class TextParserSpec extends SparkSpec with BeforeAndAfter {
 
@@ -97,29 +99,48 @@ class TextParserSpec extends SparkSpec with BeforeAndAfter {
 
     def problemFile = {
       val filename = "BDRN4.txt"
-      val ddir = "/Users/jason/scratch/sensor-failure/data/www.ndbc.noaa.gov/data/realtime2"
-      val fqFn = s"$ddir/$filename"
+      val src = Source.fromURL(getClass.getResource(s"/$filename"))
 
-      println("FN >>> " + fqFn)
-      fqFn
+      val tmpDir = java.lang.System.getProperty("java.io.tmpdir")
+      val tmpFile = File.createTempFile(getClass.getName, "test", new File(tmpDir))
+      println("FN >>> " + tmpFile.getAbsolutePath)
+
+      val reader = src.bufferedReader
+      val writer = new PrintWriter(tmpFile)
+
+      def rw(): Unit = {
+        val line = reader.readLine()
+        if (line != null && line.nonEmpty) {
+          writer.write(line)
+          writer.write("\n")
+          rw()
+        }
+      }
+
+      rw()
+
+      reader.close()
+      writer.close()
+
+      tmpFile.getAbsolutePath
     }
 
-    val problemStationId:StationId = CManId("BD", "RN4")
+    val problemStationId: StationId = CManId("BD", "RN4")
     val problemFileInstance = new TextParser(problemStationId.toString)
 
     it("parses a problem file...", SparkTest) { // turned off for speediness
 
-      val pFile: String = problemFile
+      val pFile = problemFile
 
       implicit val spark: SparkSession = ss
 
       import spark.implicits._
 
-      val df = problemFileInstance.parseFile(problemFile)
+      val df = problemFileInstance.parseFile(pFile)
 
       val cnt = df.count()
 
-      assert(cnt === 10968)
+      assert(cnt === 10959)
 
     }
 
@@ -136,7 +157,7 @@ class TextParserSpec extends SparkSpec with BeforeAndAfter {
         .as[TextRecord]
 
       val firstThree = ds.take(3)
-      assert(firstThree(0).lineLength === 77)
+      assert(firstThree(0).lineLength === 76)
       assert(firstThree(1).lineLength === 75)
       assert(firstThree(2).lineLength === 75)
 
