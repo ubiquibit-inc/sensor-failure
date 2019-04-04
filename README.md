@@ -133,8 +133,8 @@ You should have data from ~950 WxStations reporting ~17 different output formats
 ```bash
 
 % git clone https://github.com/jasonnerothin/sensor-failure.git
-% git checkout data-processing
 % cd sensor-failure 
+% git checkout data-processing
 ```
 - edit [application.properties](src/main/resources/application.properties)
 ```bash
