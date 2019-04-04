@@ -1,2 +1,11 @@
 *.class
 *.log
+data/*
+**/.idea/*
+feedkafka/target
+feedkafka/project
+**/*.iml
+project/target
+target
+.idea
+**/.DS_Store
